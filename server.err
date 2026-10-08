@@ -1,2 +1,0 @@
-(node:1000) [DEP0044] DeprecationWarning: The `util.isArray` API is deprecated. Please use `Array.isArray()` instead.
-(Use `node --trace-deprecation ...` to show where the warning was created)
