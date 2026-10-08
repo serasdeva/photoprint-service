@@ -12,7 +12,10 @@
     <title><%= title || siteName %></title>
     <meta name="description" content="<%= typeof description !== 'undefined' && description ? description : 'Печать фотографий, копирование документов, оформление документов и набор текста — быстро и по доступной цене.' %>" />
     <meta name="theme-color" content="#2563eb" />
+    <link rel="canonical" href="<%= canonicalUrl %>" />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="<%= canonicalUrl %>" />
+    <meta property="og:image" content="<%= ogImage %>" />
     <meta property="og:title" content="<%= title || siteName %>" />
     <meta property="og:description" content="Печать фотографий, копирование документов и оформление документов." />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -27,21 +30,7 @@
     <link rel="stylesheet" href="/css/components.css" />
     <link rel="stylesheet" href="/css/site.css" />
 
-    <script>
-      (function () {
-        try {
-          var stored = localStorage.getItem('theme');
-          var legacy = localStorage.getItem('site-theme');
-          var theme = stored || (legacy === 'dark' ? 'dark' : null);
-          if (!theme) {
-            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-          }
-          document.documentElement.setAttribute('data-theme', theme);
-        } catch (error) {
-          document.documentElement.setAttribute('data-theme', 'light');
-        }
-      })();
-    </script>
+    <script src="/js/theme-boot.js"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">К основному содержимому</a>

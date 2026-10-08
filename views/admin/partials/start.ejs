@@ -17,21 +17,7 @@
     <link rel="stylesheet" href="/css/components.css" />
     <link rel="stylesheet" href="/css/admin.css" />
 
-    <script>
-      (function () {
-        try {
-          var stored = localStorage.getItem('theme');
-          var legacy = localStorage.getItem('site-theme');
-          var theme = stored || (legacy === 'dark' ? 'dark' : null);
-          if (!theme) {
-            theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-          }
-          document.documentElement.setAttribute('data-theme', theme);
-        } catch (error) {
-          document.documentElement.setAttribute('data-theme', 'light');
-        }
-      })();
-    </script>
+    <script src="/js/theme-boot.js"></script>
   </head>
   <body class="admin-body">
     <a class="skip-link" href="#admin-main">К основному содержимому</a>

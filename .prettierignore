@@ -1,0 +1,6 @@
+node_modules
+data
+public/uploads
+package-lock.json
+*.ejs
+*.svg

@@ -1,3 +1,8 @@
+function readCookie(name) {
+  const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+  return match ? decodeURIComponent(match[1]) : '';
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   /* ---------- Mobile navigation ---------- */
 
@@ -127,8 +132,11 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const response = await fetch('/api/orders', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(Object.fromEntries(new FormData(form)))
+          headers: {
+            'Content-Type': 'application/json',
+            'x-csrf-token': readCookie('csrf_token'),
+          },
+          body: JSON.stringify(Object.fromEntries(new FormData(form))),
         });
 
         const result = await response.json();

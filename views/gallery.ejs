@@ -30,7 +30,7 @@
           <a href="/" class="btn btn-secondary">На главную</a>
         </div>
       <% } else { %>
-        <div class="gallery-grid">
+        <div class="gallery-grid" data-gallery-grid>
           <% items.forEach((item) => { %>
             <figure
               class="gallery-item reveal"
@@ -38,11 +38,12 @@
               data-category="<%= item.category || 'general' %>"
               data-src="<%= item.url %>"
               data-mime="<%= item.type || 'image' %>"
+              data-poster="<%= item.thumbnail || '' %>"
               data-title="<%= item.title %>"
               tabindex="0"
             >
               <% if (item.type === 'video') { %>
-                <video src="<%= item.url %>" muted playsinline preload="metadata"></video>
+                <video src="<%= item.url %>" muted playsinline preload="metadata"<% if (item.thumbnail) { %> poster="<%= item.thumbnail %>"<% } %>></video>
                 <span class="play-badge"><i class="fa-solid fa-play"></i></span>
               <% } else { %>
                 <img src="<%= item.url %>" alt="<%= item.title %>" loading="lazy" />
@@ -54,7 +55,13 @@
                 <% } %>
               </figcaption>
             </figure>
-          <% }) %>
+            <% }) %>
+        </div>
+        <div class="gallery-toolbar">
+          <span class="gallery-status" data-gallery-status></span>
+          <button type="button" class="btn btn-secondary" data-gallery-more hidden>
+            Показать ещё
+          </button>
         </div>
       <% } %>
     </div>

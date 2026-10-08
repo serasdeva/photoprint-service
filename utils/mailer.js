@@ -13,15 +13,15 @@ async function sendOrderNotification(order) {
     secure: Number(MAIL_PORT || 587) === 465,
     auth: {
       user: MAIL_USER,
-      pass: MAIL_PASS
-    }
+      pass: MAIL_PASS,
+    },
   });
 
   await transporter.sendMail({
     from: MAIL_USER,
     to: MAIL_TO,
     subject: `Новая заявка: ${order.service || 'услуга'}`,
-    text: `Имя: ${order.name}\nТелефон: ${order.phone}\nEmail: ${order.email || '—'}\nУслуга: ${order.service || '—'}\nСообщение: ${order.message || '—'}`
+    text: `Имя: ${order.name}\nТелефон: ${order.phone}\nEmail: ${order.email || '—'}\nУслуга: ${order.service || '—'}\nСообщение: ${order.message || '—'}`,
   });
 
   return { skipped: false };

@@ -13,23 +13,63 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentIndex = 0;
   let lastFocused = null;
   const fallbackImage = '/gallery-placeholders/sample-1.svg';
+  const PAGE_SIZE = 12;
+  const moreButton = document.querySelector('[data-gallery-more]');
+  const statusNode = document.querySelector('[data-gallery-status]');
+  let activeFilter = 'all';
+  let shownCount = PAGE_SIZE;
+
+  const matchesFilter = (item) =>
+    activeFilter === 'all' || item.getAttribute('data-category') === activeFilter;
+
+  const renderGallery = () => {
+    const matched = allItems.filter(matchesFilter);
+    let matchedIndex = 0;
+
+    allItems.forEach((item) => {
+      if (!matchesFilter(item)) {
+        item.classList.add('is-hidden');
+        return;
+      }
+      const withinWindow = matchedIndex < shownCount;
+      item.classList.toggle('is-hidden', !withinWindow);
+      matchedIndex += 1;
+    });
+
+    if (statusNode) {
+      statusNode.textContent = matched.length
+        ? `Показано ${Math.min(shownCount, matched.length)} из ${matched.length}`
+        : '';
+    }
+    if (moreButton) {
+      moreButton.hidden = shownCount >= matched.length;
+    }
+  };
 
   const handleMediaError = (element) => {
     if (element.tagName === 'IMG') {
       if (element.getAttribute('src') === fallbackImage) return;
-      element.addEventListener('error', () => {
-        element.src = fallbackImage;
-      }, { once: true });
+      element.addEventListener(
+        'error',
+        () => {
+          element.src = fallbackImage;
+        },
+        { once: true }
+      );
       if (element.complete && element.naturalWidth === 0) {
         element.src = fallbackImage;
       }
     } else if (element.tagName === 'VIDEO') {
-      element.poster = fallbackImage;
-      element.addEventListener('error', () => {
-        element.pause();
-        element.removeAttribute('src');
-        element.load();
-      }, { once: true });
+      element.addEventListener(
+        'error',
+        () => {
+          element.poster = fallbackImage;
+          element.pause();
+          element.removeAttribute('src');
+          element.load();
+        },
+        { once: true }
+      );
     }
   };
 
@@ -54,6 +94,8 @@ document.addEventListener('DOMContentLoaded', () => {
       video.controls = true;
       video.autoplay = true;
       video.playsInline = true;
+      const poster = item.getAttribute('data-poster');
+      if (poster) video.poster = poster;
       handleMediaError(video);
       if (src) video.src = src;
       lightboxBody.append(video);
@@ -71,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const openLightbox = (item) => {
     if (!lightbox) return;
-    visibleItems = allItems.filter((entry) => !entry.classList.contains('is-hidden'));
+    visibleItems = allItems.filter(matchesFilter);
     currentIndex = Math.max(visibleItems.indexOf(item), 0);
     lastFocused = document.activeElement;
     lightbox.classList.add('open');
@@ -97,15 +139,21 @@ document.addEventListener('DOMContentLoaded', () => {
   if (filterButtons.length && allItems.length) {
     filterButtons.forEach((button) => {
       button.addEventListener('click', () => {
-        const filter = button.getAttribute('data-filter');
+        activeFilter = button.getAttribute('data-filter') || 'all';
+        shownCount = PAGE_SIZE;
         filterButtons.forEach((item) => item.classList.toggle('active', item === button));
-
-        allItems.forEach((item) => {
-          const matches = filter === 'all' || item.getAttribute('data-category') === filter;
-          item.classList.toggle('is-hidden', !matches);
-        });
+        renderGallery();
       });
     });
+  }
+
+  moreButton?.addEventListener('click', () => {
+    shownCount += PAGE_SIZE;
+    renderGallery();
+  });
+
+  if (allItems.length) {
+    renderGallery();
   }
 
   allItems.forEach((item) => {

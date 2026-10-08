@@ -6,7 +6,7 @@ const CATEGORY_LABELS = {
   print: 'Печать',
   docs: 'Документы',
   scan: 'Сканирование',
-  copy: 'Копирование'
+  copy: 'Копирование',
 };
 
 function buildCategoryList(items) {
@@ -39,7 +39,7 @@ async function listPublicGallery(req, res) {
     title: 'Галерея',
     items,
     categories: buildCategoryList(items),
-    activePage: 'gallery'
+    activePage: 'gallery',
   });
 }
 
@@ -48,19 +48,25 @@ async function getGalleryApi(req, res) {
   res.json(items);
 }
 
-async function createGalleryItem(req, res) {
+function pickUpload(req, field) {
+  const files = req.files && req.files[field];
+  return Array.isArray(files) && files.length ? files[0] : null;
+}
+
+async function createGalleryItem(req, _res) {
   const { title, category, description, order, type } = req.body;
-  const filePath = req.file ? `/uploads/gallery/${req.file.filename}` : '';
+  const mediaFile = pickUpload(req, 'media');
+  const posterFile = pickUpload(req, 'poster');
 
   return GalleryItem.create({
     title,
     category: category || 'general',
     description: description || '',
     type: type || 'image',
-    url: filePath,
-    thumbnail: null,
-    order: Number(order || 0)
+    url: mediaFile ? `/uploads/gallery/${mediaFile.filename}` : '',
+    thumbnail: posterFile ? `/uploads/gallery/${posterFile.filename}` : null,
+    order: Number(order || 0),
   });
 }
 
-module.exports = { listPublicGallery, getGalleryApi, createGalleryItem };
+module.exports = { listPublicGallery, getGalleryApi, createGalleryItem, pickUpload };

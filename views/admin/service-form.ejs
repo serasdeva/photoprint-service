@@ -13,6 +13,7 @@
 
   <div class="admin-card">
     <form method="POST" action="<%= service ? '/admin/services/' + service.id : '/admin/services' %>" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
       <div class="form-grid">
         <div class="form-section">
           <div class="form-section-title"><i class="fa-solid fa-align-left"></i> Основное</div>

@@ -10,6 +10,7 @@
 
   <div class="admin-card">
     <form method="POST" action="/admin/settings">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
       <div class="form-grid">
         <div class="form-section">
           <div class="form-section-title"><i class="fa-regular fa-address-card"></i> Контакты и название</div>

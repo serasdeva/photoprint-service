@@ -13,6 +13,7 @@
 
   <div class="admin-card">
     <form method="POST" action="<%= item ? '/admin/gallery/' + item.id : '/admin/gallery' %>" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
       <div class="form-grid">
         <div class="form-section">
           <div class="form-section-title"><i class="fa-solid fa-align-left"></i> Основное</div>
@@ -74,6 +75,25 @@
             <div class="check-field">
               <input type="checkbox" id="g-remove-file" name="removeFile" value="1" />
               <label for="g-remove-file">Убрать файл</label>
+            </div>
+          <% } %>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title"><i class="fa-regular fa-image"></i> Обложка (для видео)</div>
+          <div>
+            <label for="g-poster">Постер</label>
+            <input id="g-poster" type="file" name="poster" accept="image/jpeg,image/png,image/webp" />
+            <div class="form-hint">JPG, PNG или WEBP, до 25 МБ. Показывается вместо видео до нажатия «Играть».</div>
+          </div>
+          <% if (item && item.thumbnail) { %>
+            <div class="file-preview">
+              <img src="<%= item.thumbnail %>" alt="Текущий постер" style="max-width: 280px;" />
+              <div class="form-hint">Текущий постер.</div>
+            </div>
+            <div class="check-field">
+              <input type="checkbox" id="g-remove-poster" name="removePoster" value="1" />
+              <label for="g-remove-poster">Убрать постер</label>
             </div>
           <% } %>
         </div>

@@ -4,9 +4,13 @@
 
 *,
 *::before,
-*::after { box-sizing: border-box; }
+*::after {
+  box-sizing: border-box;
+}
 
-* { margin: 0; }
+* {
+  margin: 0;
+}
 
 html {
   scroll-behavior: smooth;
@@ -28,7 +32,9 @@ body {
   flex-direction: column;
 }
 
-main { flex: 1 0 auto; }
+main {
+  flex: 1 0 auto;
+}
 
 img,
 svg,
@@ -37,7 +43,10 @@ video {
   max-width: 100%;
 }
 
-a { color: inherit; text-decoration: none; }
+a {
+  color: inherit;
+  text-decoration: none;
+}
 
 button,
 input,
@@ -47,18 +56,29 @@ select {
   color: inherit;
 }
 
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   line-height: 1.15;
   font-weight: 800;
   letter-spacing: -0.02em;
   text-wrap: balance;
 }
 
-h1 { font-size: clamp(2.1rem, 1.2rem + 3.4vw, 3.4rem); }
-h2 { font-size: clamp(1.6rem, 1.1rem + 1.8vw, 2.3rem); }
-h3 { font-size: clamp(1.15rem, 1rem + 0.6vw, 1.35rem); }
+h1 {
+  font-size: clamp(2.1rem, 1.2rem + 3.4vw, 3.4rem);
+}
+h2 {
+  font-size: clamp(1.6rem, 1.1rem + 1.8vw, 2.3rem);
+}
+h3 {
+  font-size: clamp(1.15rem, 1rem + 0.6vw, 1.35rem);
+}
 
-p { text-wrap: pretty; }
+p {
+  text-wrap: pretty;
+}
 
 ::selection {
   background: var(--accent);
@@ -129,10 +149,16 @@ select,
   transition: top 0.2s ease;
 }
 
-.skip-link:focus { top: 0; }
+.skip-link:focus {
+  top: 0;
+}
 
-.text-muted { color: var(--text-2); }
-.text-center { text-align: center; }
+.text-muted {
+  color: var(--text-2);
+}
+.text-center {
+  text-align: center;
+}
 
 .kicker {
   display: inline-flex;
@@ -166,7 +192,9 @@ select,
   margin-bottom: clamp(24px, 3vw, 40px);
 }
 
-.section-head .kicker { margin-bottom: 14px; }
+.section-head .kicker {
+  margin-bottom: 14px;
+}
 
 .section-copy {
   color: var(--text-2);
@@ -189,11 +217,15 @@ select,
 .reveal.is-visible {
   opacity: 1;
   transform: none;
-  transition: opacity 0.55s ease, transform 0.55s ease;
+  transition:
+    opacity 0.55s ease,
+    transform 0.55s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
+  html {
+    scroll-behavior: auto;
+  }
 
   *,
   *::before,

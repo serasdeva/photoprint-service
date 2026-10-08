@@ -1,8 +1,8 @@
 const { Op } = require('sequelize');
 const { Service, GalleryItem, Order, Setting } = require('../models');
 const { createService, updateService } = require('./serviceController');
-const { createGalleryItem } = require('./galleryController');
-const { getSettingsMap } = require('./homeController');
+const { createGalleryItem, pickUpload } = require('./galleryController');
+const { getSettingsMap, invalidateSettingsCache } = require('./homeController');
 const { safeDeleteUpload } = require('../utils/uploads');
 
 const ORDER_STATUSES = ['new', 'in_progress', 'done'];
@@ -12,7 +12,7 @@ async function renderDashboard(req, res) {
     Service.count(),
     GalleryItem.count(),
     Order.count(),
-    Order.findAll({ order: [['createdAt', 'DESC']], limit: 8, raw: true })
+    Order.findAll({ order: [['createdAt', 'DESC']], limit: 8, raw: true }),
   ]);
 
   res.render('admin/dashboard', {
@@ -20,10 +20,10 @@ async function renderDashboard(req, res) {
     stats: {
       services,
       galleryItems,
-      orders: totalOrders
+      orders: totalOrders,
     },
     recentOrders: orders,
-    activePage: 'dashboard'
+    activePage: 'dashboard',
   });
 }
 
@@ -32,7 +32,7 @@ async function renderServicesPage(req, res) {
   res.render('admin/services', {
     title: 'Услуги',
     services,
-    activePage: 'services'
+    activePage: 'services',
   });
 }
 
@@ -51,7 +51,7 @@ async function renderServiceForm(req, res) {
   res.render('admin/service-form', {
     title: service ? 'Редактировать услугу' : 'Новая услуга',
     service,
-    activePage: 'services'
+    activePage: 'services',
   });
 }
 
@@ -102,7 +102,7 @@ async function renderGalleryPage(req, res) {
   res.render('admin/gallery', {
     title: 'Галерея',
     items,
-    activePage: 'gallery'
+    activePage: 'gallery',
   });
 }
 
@@ -125,7 +125,7 @@ async function renderGalleryForm(req, res) {
     title: item ? 'Редактировать элемент' : 'Новый элемент галереи',
     item,
     categories,
-    activePage: 'gallery'
+    activePage: 'gallery',
   });
 }
 
@@ -140,23 +140,41 @@ async function saveGallery(req, res) {
         return res.redirect('/admin/gallery');
       }
 
-      const { title, category, description, order, type, removeFile } = req.body;
+      const { title, category, description, order, type, removeFile, removePoster } = req.body;
+      const mediaFile = pickUpload(req, 'media');
+      const posterFile = pickUpload(req, 'poster');
       const updateData = {
         title,
         category: category || 'general',
         description: description || '',
         order: Number(order || 0),
-        type: type || item.type
+        type: type || item.type,
       };
+      let mediaCleared = false;
 
-      if (req.file) {
+      if (mediaFile) {
         if (item.url) safeDeleteUpload(item.url);
-        updateData.url = `/uploads/gallery/${req.file.filename}`;
+        updateData.url = `/uploads/gallery/${mediaFile.filename}`;
         updateData.thumbnail = null;
+        mediaCleared = true;
       } else if (removeFile === '1' || removeFile === 'on') {
         if (item.url) safeDeleteUpload(item.url);
         updateData.url = '';
         updateData.thumbnail = null;
+        mediaCleared = true;
+      }
+
+      if (posterFile) {
+        const posterUrl = `/uploads/gallery/${posterFile.filename}`;
+        if (item.thumbnail && item.thumbnail !== posterUrl) {
+          safeDeleteUpload(item.thumbnail);
+        }
+        updateData.thumbnail = posterUrl;
+      } else if (removePoster === '1' || removePoster === 'on') {
+        if (item.thumbnail) safeDeleteUpload(item.thumbnail);
+        updateData.thumbnail = null;
+      } else if (mediaCleared && item.thumbnail) {
+        safeDeleteUpload(item.thumbnail);
       }
 
       await item.update(updateData);
@@ -185,6 +203,9 @@ async function deleteGallery(req, res) {
   if (item.url) {
     safeDeleteUpload(item.url);
   }
+  if (item.thumbnail) {
+    safeDeleteUpload(item.thumbnail);
+  }
 
   await item.destroy();
   req.flash('success', 'Элемент удалён');
@@ -206,17 +227,30 @@ async function renderOrdersPage(req, res) {
       { name: { [Op.like]: like } },
       { phone: { [Op.like]: like } },
       { email: { [Op.like]: like } },
-      { service: { [Op.like]: like } }
+      { service: { [Op.like]: like } },
     ];
   }
 
-  const orders = await Order.findAll({ where, order: [['createdAt', 'DESC']], raw: true });
+  const limit = 20;
+  const total = await Order.count({ where });
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const requestedPage = Number.parseInt(req.query.page, 10) || 1;
+  const page = Math.min(Math.max(1, requestedPage), totalPages);
+
+  const orders = await Order.findAll({
+    where,
+    order: [['createdAt', 'DESC']],
+    limit,
+    offset: (page - 1) * limit,
+    raw: true,
+  });
 
   res.render('admin/orders', {
     title: 'Заявки',
     orders,
     filters: { status: status || '', q: term },
-    activePage: 'orders'
+    pagination: { page, totalPages, total },
+    activePage: 'orders',
   });
 }
 
@@ -275,7 +309,7 @@ async function renderSettingsPage(req, res) {
   res.render('admin/settings', {
     title: 'Настройки сайта',
     settings,
-    activePage: 'settings'
+    activePage: 'settings',
   });
 }
 
@@ -287,7 +321,7 @@ const ALLOWED_SETTING_KEYS = [
   'workHours',
   'heroTitle',
   'heroSubtitle',
-  'mapEmbed'
+  'mapEmbed',
 ];
 
 async function saveSettings(req, res) {
@@ -312,6 +346,7 @@ async function saveSettings(req, res) {
       }
     }
 
+    invalidateSettingsCache();
     req.flash('success', 'Настройки сохранены');
   } catch (error) {
     req.flash('error', 'Не удалось сохранить настройки');
@@ -334,5 +369,5 @@ module.exports = {
   updateOrderStatus,
   deleteOrder,
   renderSettingsPage,
-  saveSettings
+  saveSettings,
 };

@@ -4,6 +4,7 @@ const { GalleryItem } = require('./GalleryItem');
 const { Order } = require('./Order');
 const { User } = require('./User');
 const { Setting } = require('./Setting');
+const { RevokedToken } = require('./RevokedToken');
 
 module.exports = {
   sequelize,
@@ -11,5 +12,6 @@ module.exports = {
   GalleryItem,
   Order,
   User,
-  Setting
+  Setting,
+  RevokedToken,
 };

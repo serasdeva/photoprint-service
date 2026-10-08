@@ -8,7 +8,7 @@ async function createOrder(req, res) {
   if (!errors.isEmpty()) {
     return res.status(400).json({
       success: false,
-      errors: errors.array()
+      errors: errors.array(),
     });
   }
 
@@ -21,7 +21,7 @@ async function createOrder(req, res) {
       email,
       service,
       message,
-      status: 'new'
+      status: 'new',
     });
 
     try {
@@ -33,12 +33,11 @@ async function createOrder(req, res) {
     return res.status(201).json({
       success: true,
       message: 'Заявка успешно отправлена.',
-      order
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Не удалось сохранить заявку.'
+      message: 'Не удалось сохранить заявку.',
     });
   }
 }

@@ -7,13 +7,13 @@ async function listPublicServices(req, res) {
   const services = await Service.findAll({
     where: { isActive: true },
     order: [['order', 'ASC']],
-    raw: true
+    raw: true,
   });
 
   res.render('services', {
     title: 'Услуги',
     services,
-    activePage: 'services'
+    activePage: 'services',
   });
 }
 
@@ -28,7 +28,7 @@ async function showSingleService(req, res) {
   return res.render('service-single', {
     title: service.title,
     service: service.toJSON(),
-    activePage: 'services'
+    activePage: 'services',
   });
 }
 
@@ -36,7 +36,7 @@ async function getServiceApi(req, res) {
   const services = await Service.findAll({
     where: { isActive: true },
     order: [['order', 'ASC']],
-    raw: true
+    raw: true,
   });
   res.json(services);
 }
@@ -45,9 +45,9 @@ async function resolveUniqueSlug(rawSlug, title, excludeId) {
   const base = makeSlug(rawSlug || title) || makeSlug(title) || `service-${Date.now()}`;
   let candidate = base;
   let suffix = 2;
+  const maxAttempts = 100;
 
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const where = { slug: candidate };
     if (excludeId) {
       where.id = { [Op.ne]: excludeId };
@@ -59,9 +59,11 @@ async function resolveUniqueSlug(rawSlug, title, excludeId) {
     candidate = `${base}-${suffix}`;
     suffix += 1;
   }
+
+  return `${base}-${Date.now()}`;
 }
 
-async function createService(req, res) {
+async function createService(req, _res) {
   const { title, description, price, priceUnit, icon, order, isActive, slug } = req.body;
   const finalSlug = await resolveUniqueSlug(slug, title, null);
 
@@ -74,14 +76,15 @@ async function createService(req, res) {
     icon: icon || 'fa-print',
     order: Number(order || 0),
     isActive: String(isActive) === 'on' || Boolean(isActive),
-    image: req.file ? `/uploads/services/${req.file.filename}` : null
+    image: req.file ? `/uploads/services/${req.file.filename}` : null,
   });
 
   return service;
 }
 
 async function updateService(req, res, service) {
-  const { title, description, price, priceUnit, icon, order, isActive, slug, removeImage } = req.body;
+  const { title, description, price, priceUnit, icon, order, isActive, slug, removeImage } =
+    req.body;
   const updateData = {
     title,
     description,
@@ -89,7 +92,7 @@ async function updateService(req, res, service) {
     priceUnit: priceUnit || 'шт',
     icon: icon || 'fa-print',
     order: Number(order || 0),
-    isActive: String(isActive) === 'on' || Boolean(isActive)
+    isActive: String(isActive) === 'on' || Boolean(isActive),
   };
 
   const incomingSlug = (slug || '').trim();
@@ -118,5 +121,5 @@ module.exports = {
   showSingleService,
   getServiceApi,
   createService,
-  updateService
+  updateService,
 };

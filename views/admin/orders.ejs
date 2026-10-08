@@ -72,6 +72,7 @@
                       <span class="badge badge-done">Выполнена</span>
                     <% } %>
                     <form method="POST" action="/admin/orders/<%= order.id %>/status">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
                       <select name="status" aria-label="Статус заявки">
                         <option value="new" <%= order.status === 'new' ? 'selected' : '' %>>Новая</option>
                         <option value="in_progress" <%= order.status === 'in_progress' ? 'selected' : '' %>>В работе</option>
@@ -83,6 +84,7 @@
                 </td>
                 <td>
                   <form method="POST" action="/admin/orders/<%= order.id %>/delete" style="display: inline;" data-confirm="Удалить заявку от «<%= order.name %>?»">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
                     <button type="submit" class="btn btn-danger btn-sm">
                       <i class="fa-regular fa-trash-can"></i> Удалить
                     </button>
@@ -93,6 +95,31 @@
           </tbody>
         </table>
       </div>
+
+      <% if (pagination.totalPages > 1) { %>
+        <%
+          const pageLink = (targetPage) => {
+            const params = new URLSearchParams();
+            if (filters.status) params.set('status', filters.status);
+            if (filters.q) params.set('q', filters.q);
+            params.set('page', targetPage);
+            return '/admin/orders?' + params.toString();
+          };
+        %>
+        <nav class="pagination" aria-label="Пагинация заявок">
+          <% if (pagination.page > 1) { %>
+            <a class="btn btn-secondary btn-sm" href="<%= pageLink(pagination.page - 1) %>">
+              <i class="fa-solid fa-chevron-left"></i> Назад
+            </a>
+          <% } %>
+          <span class="pagination-status">Стр. <%= pagination.page %> из <%= pagination.totalPages %> · заявок: <%= pagination.total %></span>
+          <% if (pagination.page < pagination.totalPages) { %>
+            <a class="btn btn-secondary btn-sm" href="<%= pageLink(pagination.page + 1) %>">
+              Вперёд <i class="fa-solid fa-chevron-right"></i>
+            </a>
+          <% } %>
+        </nav>
+      <% } %>
     <% } %>
   </div>
 

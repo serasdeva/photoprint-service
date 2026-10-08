@@ -1,24 +1,23 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/db');
 
-const Setting = sequelize.define(
-  'Setting',
+const RevokedToken = sequelize.define(
+  'RevokedToken',
   {
-    key: {
+    jti: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
     },
-    value: {
-      type: DataTypes.TEXT,
+    expiresAt: {
+      type: DataTypes.DATE,
       allowNull: false,
-      defaultValue: '',
     },
   },
   {
     timestamps: true,
-    tableName: 'Settings',
+    tableName: 'RevokedTokens',
   }
 );
 
-module.exports = { Setting };
+module.exports = { RevokedToken };

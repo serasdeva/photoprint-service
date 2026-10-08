@@ -59,10 +59,10 @@
   --header-height: 68px;
 
   /* Typography */
-  --font: "Manrope", "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+  --font: 'Manrope', 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
 }
 
-:root[data-theme="dark"] {
+:root[data-theme='dark'] {
   color-scheme: dark;
 
   --accent: #60a5fa;

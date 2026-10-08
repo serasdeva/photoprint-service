@@ -58,6 +58,7 @@
                       <i class="fa-solid fa-pen"></i> Изменить
                     </a>
                     <form method="POST" action="/admin/services/<%= service.id %>/delete" style="display: inline;" data-confirm="Удалить услугу «<%= service.title %>»?">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
                       <button type="submit" class="btn btn-danger btn-sm">
                         <i class="fa-regular fa-trash-can"></i> Удалить
                       </button>

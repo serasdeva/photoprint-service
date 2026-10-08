@@ -7,7 +7,7 @@ const MIME_TO_EXTENSION = {
   'image/jpeg': '.jpg',
   'image/png': '.png',
   'image/webp': '.webp',
-  'video/mp4': '.mp4'
+  'video/mp4': '.mp4',
 };
 
 function ensureDirectory(dir) {
@@ -24,7 +24,7 @@ const serviceStorage = multer.diskStorage({
     const ext = path.extname(file.originalname).toLowerCase();
     const safeName = `${Date.now()}-${Math.random().toString(16).slice(2)}${ext}`;
     cb(null, safeName);
-  }
+  },
 });
 
 const galleryStorage = multer.diskStorage({
@@ -36,8 +36,28 @@ const galleryStorage = multer.diskStorage({
     const ext = path.extname(file.originalname).toLowerCase();
     const safeName = `${Date.now()}-${Math.random().toString(16).slice(2)}${ext}`;
     cb(null, safeName);
-  }
+  },
 });
+
+const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
+
+function imageFileFilter(req, file, cb) {
+  const extension = path.extname(file.originalname).toLowerCase();
+  const expectedExtension = MIME_TO_EXTENSION[file.mimetype];
+
+  if (!IMAGE_EXTENSIONS.has(extension) || !expectedExtension || extension !== expectedExtension) {
+    return cb(new Error('Недоступный тип файла. Используйте JPG, PNG или WEBP.'));
+  }
+
+  cb(null, true);
+}
+
+function galleryFileFilter(req, file, cb) {
+  if (file.fieldname === 'poster') {
+    return imageFileFilter(req, file, cb);
+  }
+  return fileFilter(req, file, cb);
+}
 
 function fileFilter(req, file, cb) {
   const extension = path.extname(file.originalname).toLowerCase();
@@ -53,13 +73,13 @@ function fileFilter(req, file, cb) {
 const uploadServiceImage = multer({
   storage: serviceStorage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
 const uploadGalleryMedia = multer({
   storage: galleryStorage,
-  fileFilter,
-  limits: { fileSize: 25 * 1024 * 1024 }
+  fileFilter: galleryFileFilter,
+  limits: { fileSize: 25 * 1024 * 1024 },
 });
 
 module.exports = { uploadServiceImage, uploadGalleryMedia };

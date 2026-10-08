@@ -4,7 +4,7 @@ function makeSlug(value) {
   return slugifyLib(value || '', {
     lower: true,
     strict: true,
-    trim: true
+    trim: true,
   });
 }
 

@@ -26,6 +26,7 @@
             <span class="admin-user"><i class="fa-regular fa-user"></i> <%= user.username %></span>
           <% } %>
           <form method="POST" action="/admin/logout">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
             <button type="submit" class="btn btn-ghost">
               <i class="fa-solid fa-right-from-bracket"></i> <span>Выйти</span>
             </button>

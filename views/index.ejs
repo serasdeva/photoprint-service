@@ -204,6 +204,9 @@
       <div class="card reveal">
         <h3>Оставить заявку</h3>
         <form data-form="order">
+          <div class="hp-field" aria-hidden="true">
+            <input type="text" name="website" tabindex="-1" autocomplete="off" value="" />
+          </div>
           <div class="form-grid">
             <div class="form-row">
               <div>
@@ -232,7 +235,11 @@
             </div>
 
             <button type="submit" class="btn btn-primary btn-block">Отправить заявку</button>
-            <div data-form-status></div>
+            <p class="form-hint">
+              Нажимая «Отправить», вы соглашаетесь с
+              <a href="/privacy">политикой конфиденциальности</a>.
+            </p>
+            <div data-form-status aria-live="polite"></div>
           </div>
         </form>
       </div>

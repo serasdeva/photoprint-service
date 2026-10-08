@@ -9,3 +9,7 @@ public/uploads/*
 *.sqlite
 *.sqlite3
 data/
+server.log
+server.err
+server.pid
+*.log
