@@ -174,7 +174,10 @@ test('POST /admin/login without CSRF token does not authenticate', async () => {
   const authCookie = collectCookies(res).auth_token;
   assert.equal(authCookie, undefined, 'auth cookie must not be issued');
 
-  const loginPage = await request(app).get('/admin/login');
+  const sessionJar = collectCookies(res);
+  const loginPage = await request(app)
+    .get('/admin/login')
+    .set('Cookie', cookieHeader(sessionJar));
   assert.match(loginPage.text, /Недействительный токен формы/, 'CSRF failure flash must render');
 });
 

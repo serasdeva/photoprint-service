@@ -43,7 +43,8 @@ function csrfCheck(req, res, next) {
     const acceptsHtml = (req.get('accept') || '').includes('text/html');
     if (acceptsHtml) {
       req.flash('error', 'Недействительный токен формы. Обновите страницу и попробуйте снова.');
-      return res.redirect(req.get('Referrer') || '/');
+      const fallbackUrl = req.get('Referrer') || req.originalUrl || '/';
+      return res.redirect(fallbackUrl);
     }
     return res.status(403).json({ success: false, message: 'CSRF token mismatch' });
   }
