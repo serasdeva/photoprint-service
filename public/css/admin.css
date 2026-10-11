@@ -3,10 +3,56 @@
    ============================================================ */
 
 .admin-body {
+  --accent: #65427a;
+  --accent-hover: #513361;
+  --accent-active: #40294f;
+  --accent-soft: #f3edf6;
+  --accent-soft-2: #e6d8ed;
+  --accent-contrast: #ffffff;
+  --accent-warm: #b7772c;
+  --accent-warm-hover: #965d1e;
+  --accent-warm-soft: #fbf2e5;
+
+  --bg: #f7f4f8;
+  --bg-grad: radial-gradient(circle at top left, rgba(101, 66, 122, 0.08), transparent 34%);
+  --surface: #fffefe;
+  --surface-2: #f2edf4;
+  --surface-3: #e9e1ec;
+  --text: #292330;
+  --text-2: #5f5666;
+  --text-3: #857b8d;
+  --border: #e7dfea;
+  --border-strong: #d4c8d9;
+  --overlay: rgba(25, 17, 31, 0.62);
+
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: var(--bg);
+  background: var(--bg-grad), var(--bg);
+}
+
+:root[data-theme='dark'] .admin-body {
+  --accent: #c6a2d7;
+  --accent-hover: #d8bde5;
+  --accent-active: #eadbf0;
+  --accent-soft: #30243a;
+  --accent-soft-2: #42304e;
+  --accent-contrast: #241a2b;
+  --accent-warm: #e2b66e;
+  --accent-warm-hover: #f0ca8b;
+  --accent-warm-soft: #382b1c;
+
+  --bg: #17131b;
+  --bg-grad: radial-gradient(circle at top left, rgba(177, 133, 199, 0.1), transparent 34%);
+  --surface: #211b26;
+  --surface-2: #2b2331;
+  --surface-3: #372d3e;
+  --text: #f4eff6;
+  --text-2: #c2b7c9;
+  --text-3: #a094a8;
+  --border: #3a3041;
+  --border-strong: #51435a;
+  --overlay: rgba(11, 8, 14, 0.78);
 }
 
 /* ---------- Topbar ---------- */
@@ -32,8 +78,9 @@
 }
 
 .admin-topbar .brand-mark {
-  background: linear-gradient(135deg, var(--text), var(--text-2));
-  color: var(--surface);
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  color: var(--accent-contrast);
+  box-shadow: 0 5px 14px color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
 .admin-brand-sub {
