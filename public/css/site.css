@@ -396,7 +396,8 @@ html[data-theme='dark'] .public-site {
 .hero-art {
   position: relative;
   min-width: 0;
-  padding: 0 18px 24px 0;
+  display: grid;
+  gap: 14px;
 }
 
 .hero-art-frame {
@@ -483,13 +484,11 @@ html[data-theme='dark'] .public-site {
 }
 
 .hero-art-note {
-  position: absolute;
-  right: 0;
-  bottom: 0;
   display: flex;
   align-items: center;
+  justify-self: end;
   gap: 12px;
-  max-width: calc(100% - 24px);
+  max-width: 100%;
   padding: 14px 18px;
   border: 1px solid var(--border);
   border-radius: 18px;
@@ -1416,8 +1415,7 @@ html[data-theme='dark'] .public-site {
   }
 
   .hero-art {
-    padding-right: 10px;
-    padding-bottom: 20px;
+    gap: 12px;
   }
 
   .hero-art-frame {
@@ -1426,7 +1424,6 @@ html[data-theme='dark'] .public-site {
   }
 
   .hero-art-note {
-    right: 0;
     padding: 11px 14px;
   }
 
@@ -1537,7 +1534,7 @@ html[data-theme='dark'] .public-site {
   }
 
   .hero-art-note {
-    max-width: calc(100% - 12px);
+    max-width: 100%;
   }
 
   .header-inner {
