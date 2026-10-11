@@ -1469,12 +1469,12 @@ html[data-theme='dark'] .public-site {
   }
 
   .gallery-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
     gap: 12px;
   }
 
   .gallery-page-section .gallery-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .gallery-item figcaption {
