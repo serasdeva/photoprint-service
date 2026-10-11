@@ -4,16 +4,25 @@ const { createService, updateService } = require('./serviceController');
 const { createGalleryItem, pickUpload } = require('./galleryController');
 const { getSettingsMap, invalidateSettingsCache } = require('./homeController');
 const { safeDeleteUpload } = require('../utils/uploads');
+const { saveAdminFormDraft, consumeAdminFormDraft } = require('../utils/adminFormDraft');
 
 const ORDER_STATUSES = ['new', 'in_progress', 'done'];
 
 async function renderDashboard(req, res) {
-  const [services, galleryItems, totalOrders, orders] = await Promise.all([
-    Service.count(),
-    GalleryItem.count(),
-    Order.count(),
-    Order.findAll({ order: [['createdAt', 'DESC']], limit: 8, raw: true }),
-  ]);
+  const [services, galleryItems, totalOrders, newOrdersCount, newOrders, orders] =
+    await Promise.all([
+      Service.count(),
+      GalleryItem.count(),
+      Order.count(),
+      Order.count({ where: { status: 'new' } }),
+      Order.findAll({
+        where: { status: 'new' },
+        order: [['createdAt', 'DESC']],
+        limit: 5,
+        raw: true,
+      }),
+      Order.findAll({ order: [['createdAt', 'DESC']], limit: 8, raw: true }),
+    ]);
 
   res.render('admin/dashboard', {
     title: 'Панель управления',
@@ -21,17 +30,43 @@ async function renderDashboard(req, res) {
       services,
       galleryItems,
       orders: totalOrders,
+      newOrders: newOrdersCount,
     },
+    newOrders,
     recentOrders: orders,
     activePage: 'dashboard',
   });
 }
 
 async function renderServicesPage(req, res) {
-  const services = await Service.findAll({ order: [['order', 'ASC']], raw: true });
+  const term = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 120) : '';
+  const where = term
+    ? {
+        [Op.or]: [
+          { title: { [Op.like]: `%${term}%` } },
+          { slug: { [Op.like]: `%${term}%` } },
+          { description: { [Op.like]: `%${term}%` } },
+        ],
+      }
+    : {};
+  const limit = 20;
+  const total = await Service.count({ where });
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const requestedPage = Number.parseInt(req.query.page, 10) || 1;
+  const page = Math.min(Math.max(1, requestedPage), totalPages);
+  const services = await Service.findAll({
+    where,
+    order: [['order', 'ASC']],
+    limit,
+    offset: (page - 1) * limit,
+    raw: true,
+  });
+
   res.render('admin/services', {
     title: 'Услуги',
     services,
+    filters: { q: term },
+    pagination: { page, totalPages, total },
     activePage: 'services',
   });
 }
@@ -48,9 +83,24 @@ async function renderServiceForm(req, res) {
     }
   }
 
+  const formDraft = consumeAdminFormDraft(req, 'services', id);
+  const formValues = {
+    title: '',
+    slug: '',
+    description: '',
+    price: 0,
+    priceUnit: 'шт',
+    icon: 'fa-print',
+    order: 0,
+    isActive: false,
+    ...(service ? service.get({ plain: true }) : {}),
+    ...formDraft,
+  };
+
   res.render('admin/service-form', {
     title: service ? 'Редактировать услугу' : 'Новая услуга',
     service,
+    formValues,
     activePage: 'services',
   });
 }
@@ -74,7 +124,9 @@ async function saveService(req, res) {
     req.flash('success', 'Услуга добавлена');
     return res.redirect('/admin/services');
   } catch (error) {
-    req.flash('error', 'Ошибка при сохранении услуги');
+    console.error('Admin service save failed:', error);
+    saveAdminFormDraft(req, 'services', id);
+    req.flash('error', 'Не удалось сохранить услугу. Проверьте данные и попробуйте снова.');
     return res.redirect(id ? `/admin/services/${id}/edit` : '/admin/services/new');
   }
 }
@@ -98,10 +150,34 @@ async function deleteService(req, res) {
 }
 
 async function renderGalleryPage(req, res) {
-  const items = await GalleryItem.findAll({ order: [['order', 'ASC']], raw: true });
+  const term = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 120) : '';
+  const where = term
+    ? {
+        [Op.or]: [
+          { title: { [Op.like]: `%${term}%` } },
+          { category: { [Op.like]: `%${term}%` } },
+          { description: { [Op.like]: `%${term}%` } },
+        ],
+      }
+    : {};
+  const limit = 20;
+  const total = await GalleryItem.count({ where });
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const requestedPage = Number.parseInt(req.query.page, 10) || 1;
+  const page = Math.min(Math.max(1, requestedPage), totalPages);
+  const items = await GalleryItem.findAll({
+    where,
+    order: [['order', 'ASC']],
+    limit,
+    offset: (page - 1) * limit,
+    raw: true,
+  });
+
   res.render('admin/gallery', {
     title: 'Галерея',
     items,
+    filters: { q: term },
+    pagination: { page, totalPages, total },
     activePage: 'gallery',
   });
 }
@@ -121,10 +197,22 @@ async function renderGalleryForm(req, res) {
   const rows = await GalleryItem.findAll({ attributes: ['category'], raw: true });
   const categories = [...new Set(rows.map((row) => row.category).filter(Boolean))].sort();
 
+  const formDraft = consumeAdminFormDraft(req, 'gallery', id);
+  const formValues = {
+    title: '',
+    description: '',
+    type: 'image',
+    category: 'general',
+    order: 0,
+    ...(item ? item.get({ plain: true }) : {}),
+    ...formDraft,
+  };
+
   res.render('admin/gallery-form', {
     title: item ? 'Редактировать элемент' : 'Новый элемент галереи',
     item,
     categories,
+    formValues,
     activePage: 'gallery',
   });
 }
@@ -186,7 +274,12 @@ async function saveGallery(req, res) {
     req.flash('success', 'Элемент галереи добавлен');
     return res.redirect('/admin/gallery');
   } catch (error) {
-    req.flash('error', 'Ошибка при сохранении файла галереи');
+    console.error('Admin gallery save failed:', error);
+    saveAdminFormDraft(req, 'gallery', id);
+    req.flash(
+      'error',
+      'Не удалось сохранить элемент галереи. Проверьте данные и попробуйте снова.'
+    );
     return res.redirect(id ? `/admin/gallery/${id}/edit` : '/admin/gallery/new');
   }
 }
@@ -306,9 +399,10 @@ async function deleteOrder(req, res) {
 
 async function renderSettingsPage(req, res) {
   const settings = await getSettingsMap();
+  const settingsDraft = consumeAdminFormDraft(req, 'settings');
   res.render('admin/settings', {
     title: 'Настройки сайта',
-    settings,
+    settings: { ...settings, ...settingsDraft },
     activePage: 'settings',
   });
 }
@@ -349,7 +443,9 @@ async function saveSettings(req, res) {
     invalidateSettingsCache();
     req.flash('success', 'Настройки сохранены');
   } catch (error) {
-    req.flash('error', 'Не удалось сохранить настройки');
+    console.error('Admin settings save failed:', error);
+    saveAdminFormDraft(req, 'settings');
+    req.flash('error', 'Не удалось сохранить настройки. Проверьте данные и попробуйте снова.');
   }
 
   return res.redirect('/admin/settings');

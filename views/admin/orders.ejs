@@ -54,9 +54,9 @@
               <tr>
                 <td>
                   <span class="cell-title"><%= order.name %></span>
-                  <span class="cell-sub"><%= order.phone %></span>
+                  <a class="cell-sub admin-contact-link" href="tel:<%= String(order.phone || '').replace(/[^\d+]/g, '') %>"><%= order.phone %></a>
                   <% if (order.email) { %>
-                    <span class="cell-sub"><%= order.email %></span>
+                    <a class="cell-sub admin-contact-link" href="mailto:<%= order.email %>"><%= order.email %></a>
                   <% } %>
                 </td>
                 <td><%= order.service || '—' %></td>

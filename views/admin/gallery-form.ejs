@@ -19,11 +19,11 @@
           <div class="form-section-title"><i class="fa-solid fa-align-left"></i> Основное</div>
           <div>
             <label for="g-title">Название <span class="req">*</span></label>
-            <input id="g-title" name="title" value="<%= item ? item.title : '' %>" required placeholder="Например: Печать семейных фото" />
+            <input id="g-title" name="title" value="<%= formValues.title %>" required placeholder="Например: Печать семейных фото" />
           </div>
           <div>
             <label for="g-description">Описание</label>
-            <textarea id="g-description" name="description" placeholder="Краткое описание работы"><%= item ? item.description : '' %></textarea>
+            <textarea id="g-description" name="description" placeholder="Краткое описание работы"><%= formValues.description %></textarea>
           </div>
         </div>
 
@@ -33,23 +33,23 @@
             <div>
               <label for="g-type">Тип</label>
               <select id="g-type" name="type">
-                <option value="image" <%= item && item.type === 'image' ? 'selected' : '' %>>Фото</option>
-                <option value="video" <%= item && item.type === 'video' ? 'selected' : '' %>>Видео</option>
+                <option value="image" <%= formValues.type === 'image' ? 'selected' : '' %>>Фото</option>
+                <option value="video" <%= formValues.type === 'video' ? 'selected' : '' %>>Видео</option>
               </select>
             </div>
             <div>
               <label for="g-category">Категория</label>
-              <input id="g-category" name="category" list="category-options" value="<%= item ? item.category : 'general' %>" placeholder="photo / print / docs" />
+              <input id="g-category" name="category" list="category-options" value="<%= formValues.category %>" placeholder="photo / print / docs" />
               <datalist id="category-options">
                 <% (categories || []).forEach((category) => { %>
-                  <option value="<%= category.value %>"><%= category.label %></option>
+                  <option value="<%= category %>"><%= category %></option>
                 <% }) %>
               </datalist>
             </div>
           </div>
           <div>
             <label for="g-order">Порядок</label>
-            <input id="g-order" type="number" name="order" value="<%= item ? item.order : 0 %>" style="max-width: 180px;" />
+            <input id="g-order" type="number" name="order" value="<%= formValues.order %>" style="max-width: 180px;" />
           </div>
         </div>
 
@@ -73,7 +73,7 @@
               <div class="form-hint">Текущий файл. Выберите новый файл, чтобы заменить его.</div>
             </div>
             <div class="check-field">
-              <input type="checkbox" id="g-remove-file" name="removeFile" value="1" />
+              <input type="checkbox" id="g-remove-file" name="removeFile" value="1" <%= formValues.removeFile === '1' || formValues.removeFile === 'on' ? 'checked' : '' %> />
               <label for="g-remove-file">Убрать файл</label>
             </div>
           <% } %>
@@ -92,7 +92,7 @@
               <div class="form-hint">Текущий постер.</div>
             </div>
             <div class="check-field">
-              <input type="checkbox" id="g-remove-poster" name="removePoster" value="1" />
+              <input type="checkbox" id="g-remove-poster" name="removePoster" value="1" <%= formValues.removePoster === '1' || formValues.removePoster === 'on' ? 'checked' : '' %> />
               <label for="g-remove-poster">Убрать постер</label>
             </div>
           <% } %>

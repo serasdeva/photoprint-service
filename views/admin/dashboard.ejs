@@ -33,6 +33,71 @@
         <div class="stat-card-value"><%= stats.orders %></div>
       </div>
     </div>
+    <a href="/admin/orders?status=new" class="stat-card stat-card-link">
+      <span class="stat-card-icon is-danger"><i class="fa-solid fa-bell"></i></span>
+      <div>
+        <div class="stat-card-label">Новые заявки</div>
+        <div class="stat-card-value"><%= stats.newOrders %></div>
+      </div>
+      <i class="fa-solid fa-arrow-right stat-card-arrow" aria-hidden="true"></i>
+    </a>
+  </div>
+
+  <div class="admin-card">
+    <div class="admin-card-head">
+      <div>
+        <h2>Новые заявки</h2>
+        <p class="page-sub">Нуждаются в ответе или подтверждении</p>
+      </div>
+      <a href="/admin/orders?status=new" class="btn btn-ghost btn-sm">Все новые</a>
+    </div>
+
+    <% if (!newOrders.length) { %>
+      <div class="empty-state">
+        <i class="fa-regular fa-circle-check"></i>
+        <h3>Новых заявок нет</h3>
+        <p>Новые обращения появятся здесь.</p>
+      </div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Клиент</th>
+              <th>Услуга</th>
+              <th>Сообщение</th>
+              <th>Дата</th>
+              <th>Быстрые действия</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% newOrders.forEach((order) => { %>
+              <tr>
+                <td>
+                  <span class="cell-title"><%= order.name %></span>
+                  <a class="cell-sub admin-contact-link" href="tel:<%= String(order.phone || '').replace(/[^\d+]/g, '') %>"><%= order.phone %></a>
+                  <% if (order.email) { %>
+                    <a class="cell-sub admin-contact-link" href="mailto:<%= order.email %>"><%= order.email %></a>
+                  <% } %>
+                </td>
+                <td><%= order.service || '—' %></td>
+                <td><span class="truncate" title="<%= order.message || '' %>"><%= order.message || '—' %></span></td>
+                <td><%= new Date(order.createdAt).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></td>
+                <td>
+                  <form method="POST" action="/admin/orders/<%= order.id %>/status">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+                    <input type="hidden" name="status" value="in_progress" />
+                    <button type="submit" class="btn btn-primary btn-sm">
+                      <i class="fa-solid fa-play"></i> Взять в работу
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
   </div>
 
   <div class="admin-card">

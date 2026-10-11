@@ -12,12 +12,27 @@
   </div>
 
   <div class="admin-card">
+    <form method="GET" action="/admin/services" class="admin-list-toolbar">
+      <input type="search" name="q" value="<%= filters.q %>" placeholder="Поиск по названию, адресу или описанию" aria-label="Поиск услуг" />
+      <button type="submit" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-magnifying-glass"></i> Найти
+      </button>
+      <% if (filters.q) { %>
+        <a href="/admin/services" class="btn btn-ghost btn-sm">Сбросить</a>
+      <% } %>
+      <span class="admin-list-count">Услуг: <%= pagination.total %></span>
+    </form>
+
     <% if (!services.length) { %>
       <div class="empty-state">
         <i class="fa-regular fa-folder-open"></i>
-        <h3>Услуг пока нет</h3>
-        <p>Добавьте первую услугу, чтобы она появилась на сайте.</p>
-        <a href="/admin/services/new" class="btn btn-primary">Добавить услугу</a>
+        <h3><%= filters.q ? 'Услуги не найдены' : 'Услуг пока нет' %></h3>
+        <p><%= filters.q ? 'Измените запрос или сбросьте фильтр.' : 'Добавьте первую услугу, чтобы она появилась на сайте.' %></p>
+        <% if (filters.q) { %>
+          <a href="/admin/services" class="btn btn-secondary">Показать все услуги</a>
+        <% } else { %>
+          <a href="/admin/services/new" class="btn btn-primary">Добавить услугу</a>
+        <% } %>
       </div>
     <% } else { %>
       <div class="table-wrap">
@@ -70,6 +85,26 @@
           </tbody>
         </table>
       </div>
+    <% } %>
+
+    <% if (pagination.totalPages > 1) { %>
+      <%
+        const pageLink = (targetPage) => {
+          const params = new URLSearchParams();
+          if (filters.q) params.set('q', filters.q);
+          params.set('page', targetPage);
+          return '/admin/services?' + params.toString();
+        };
+      %>
+      <nav class="pagination" aria-label="Пагинация услуг">
+        <% if (pagination.page > 1) { %>
+          <a class="btn btn-secondary btn-sm" href="<%= pageLink(pagination.page - 1) %>"><i class="fa-solid fa-chevron-left"></i> Назад</a>
+        <% } %>
+        <span class="pagination-status">Стр. <%= pagination.page %> из <%= pagination.totalPages %> · услуг: <%= pagination.total %></span>
+        <% if (pagination.page < pagination.totalPages) { %>
+          <a class="btn btn-secondary btn-sm" href="<%= pageLink(pagination.page + 1) %>">Вперёд <i class="fa-solid fa-chevron-right"></i></a>
+        <% } %>
+      </nav>
     <% } %>
   </div>
 

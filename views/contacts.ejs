@@ -1,7 +1,7 @@
 <%- include('./partials/header', { activePage: 'contacts', title: 'Контакты', description: 'Адрес, телефон, режим работы и форма обратной связи PhotoPrint Service.' }) %>
 
 <main id="main">
-  <section class="page-hero">
+  <section class="page-hero contact-page-hero">
     <div class="container">
       <nav class="breadcrumbs" aria-label="Хлебные крошки">
         <a href="/">Главная</a>
@@ -13,10 +13,10 @@
     </div>
   </section>
 
-  <section class="section">
-    <div class="container contact-grid">
-      <div class="contact-stack reveal">
-        <div class="card">
+  <section class="section contact-page-section">
+    <div class="container contact-grid contact-page-grid">
+      <div class="contact-stack contact-info-stack reveal">
+        <div class="card contact-info-card">
           <h3>Наши данные</h3>
           <ul class="contact-list">
             <li>
@@ -30,7 +30,7 @@
               <i class="fa-solid fa-phone"></i>
               <div>
                 <strong>Телефон</strong>
-                <span><a href="tel:+74951234567"><%= settings.phone %></a></span>
+                <span><a href="tel:<%= String(settings.phone || '').replace(/[^\d+]/g, '') %>"><%= settings.phone %></a></span>
               </div>
             </li>
             <li>
@@ -50,14 +50,14 @@
           </ul>
         </div>
 
-        <div class="card" style="padding: 0; overflow: hidden;">
+        <div class="card contact-map-card">
           <div class="map"><%- settings.mapEmbed || '' %></div>
         </div>
       </div>
 
-      <div class="card reveal">
+      <div class="card contact-form-card reveal">
         <h3>Написать нам</h3>
-        <p class="text-muted" style="font-size: 0.93rem;">Заполните форму — перезвоним в течение 15 минут в рабочее время.</p>
+        <p class="text-muted contact-form-copy">Заполните форму — свяжемся с вами в рабочее время.</p>
         <form data-form="order">
           <div class="hp-field" aria-hidden="true">
             <input type="text" name="website" tabindex="-1" autocomplete="off" value="" />

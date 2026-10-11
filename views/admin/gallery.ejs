@@ -12,12 +12,27 @@
   </div>
 
   <div class="admin-card">
+    <form method="GET" action="/admin/gallery" class="admin-list-toolbar">
+      <input type="search" name="q" value="<%= filters.q %>" placeholder="Поиск по названию, категории или описанию" aria-label="Поиск по галерее" />
+      <button type="submit" class="btn btn-secondary btn-sm">
+        <i class="fa-solid fa-magnifying-glass"></i> Найти
+      </button>
+      <% if (filters.q) { %>
+        <a href="/admin/gallery" class="btn btn-ghost btn-sm">Сбросить</a>
+      <% } %>
+      <span class="admin-list-count">Элементов: <%= pagination.total %></span>
+    </form>
+
     <% if (!items.length) { %>
       <div class="empty-state">
         <i class="fa-regular fa-images"></i>
-        <h3>В галерее пока пусто</h3>
-        <p>Добавьте первые работы — они появятся на сайте.</p>
-        <a href="/admin/gallery/new" class="btn btn-primary">Добавить элемент</a>
+        <h3><%= filters.q ? 'Ничего не найдено' : 'В галерее пока пусто' %></h3>
+        <p><%= filters.q ? 'Измените запрос или сбросьте поиск.' : 'Добавьте первые работы — они появятся на сайте.' %></p>
+        <% if (filters.q) { %>
+          <a href="/admin/gallery" class="btn btn-secondary">Показать все элементы</a>
+        <% } else { %>
+          <a href="/admin/gallery/new" class="btn btn-primary">Добавить элемент</a>
+        <% } %>
       </div>
     <% } else { %>
       <div class="table-wrap">
@@ -76,6 +91,26 @@
           </tbody>
         </table>
       </div>
+    <% } %>
+
+    <% if (pagination.totalPages > 1) { %>
+      <%
+        const pageLink = (targetPage) => {
+          const params = new URLSearchParams();
+          if (filters.q) params.set('q', filters.q);
+          params.set('page', targetPage);
+          return '/admin/gallery?' + params.toString();
+        };
+      %>
+      <nav class="pagination" aria-label="Пагинация галереи">
+        <% if (pagination.page > 1) { %>
+          <a class="btn btn-secondary btn-sm" href="<%= pageLink(pagination.page - 1) %>"><i class="fa-solid fa-chevron-left"></i> Назад</a>
+        <% } %>
+        <span class="pagination-status">Стр. <%= pagination.page %> из <%= pagination.totalPages %> · элементов: <%= pagination.total %></span>
+        <% if (pagination.page < pagination.totalPages) { %>
+          <a class="btn btn-secondary btn-sm" href="<%= pageLink(pagination.page + 1) %>">Вперёд <i class="fa-solid fa-chevron-right"></i></a>
+        <% } %>
+      </nav>
     <% } %>
   </div>
 

@@ -5,7 +5,7 @@
 }) %>
 
 <main id="main">
-  <section class="page-hero">
+  <section class="page-hero privacy-page-hero">
     <div class="container">
       <nav class="breadcrumbs" aria-label="Хлебные крошки">
         <a href="/">Главная</a>
@@ -17,9 +17,9 @@
     </div>
   </section>
 
-  <section class="section">
+  <section class="section privacy-page-section">
     <div class="container container-narrow">
-      <div class="card">
+      <article class="card privacy-content">
         <h2>1. Какие данные мы собираем</h2>
         <p>
           Через формы обратной связи на сайте мы получаем только те данные, которые вы указываете
@@ -65,7 +65,7 @@
           телефон <a href="tel:<%= String(settings.phone || '').replace(/[^\d+]/g, '') %>"><%= settings.phone %></a>.
         </p>
         <p class="form-hint">Последнее обновление: <%= currentYear %> год.</p>
-      </div>
+      </article>
     </div>
   </section>
 </main>

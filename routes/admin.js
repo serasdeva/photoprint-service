@@ -5,6 +5,7 @@ const { body, validationResult } = require('express-validator');
 const asyncHandler = require('../utils/asyncHandler');
 const { requireAuth } = require('../middleware/auth');
 const { verifyCsrfAfterUpload } = require('../middleware/csrf');
+const { saveAdminFormDraft } = require('../utils/adminFormDraft');
 const { uploadServiceImage, uploadGalleryMedia } = require('../middleware/upload');
 const { loginPage, loginUser, logoutUser } = require('../controllers/authController');
 const {
@@ -50,7 +51,8 @@ function handleUpload(uploadMiddleware) {
       }
 
       const message = err.message || 'Ошибка загрузки файла';
-      const section = req.baseUrl.includes('gallery') ? 'gallery' : 'services';
+      const section = req.path.startsWith('/gallery') ? 'gallery' : 'services';
+      saveAdminFormDraft(req, section, req.params.id);
       req.flash('error', message);
       return res.redirect(
         req.params.id ? `/admin/${section}/${req.params.id}/edit` : `/admin/${section}/new`
@@ -60,9 +62,17 @@ function handleUpload(uploadMiddleware) {
 }
 
 function discardUploadedFile(req) {
-  if (req.file && req.file.path) {
-    fs.unlink(req.file.path, () => {});
-  }
+  const uploadedFiles = [req.file, ...Object.values(req.files || {}).flat()].filter(
+    (file) => file && file.path
+  );
+
+  uploadedFiles.forEach((file) => {
+    fs.unlink(file.path, (error) => {
+      if (error && error.code !== 'ENOENT') {
+        console.error('Failed to remove rejected admin upload:', error);
+      }
+    });
+  });
 }
 
 function validate(rules) {
@@ -75,15 +85,18 @@ function validate(rules) {
       }
 
       discardUploadedFile(req);
+      const section = req.path.startsWith('/gallery') ? 'gallery' : 'services';
+      saveAdminFormDraft(req, section, req.params.id);
+      const validationMessage = errors
+        .array()
+        .map((item) => item.msg)
+        .join(' ');
+      const hasUpload = req.file || Object.values(req.files || {}).some((files) => files.length);
       req.flash(
         'error',
-        errors
-          .array()
-          .map((item) => item.msg)
-          .join(' ')
+        hasUpload ? `${validationMessage} Выберите файл повторно.` : validationMessage
       );
 
-      const section = req.baseUrl.includes('gallery') ? 'gallery' : 'services';
       return res.redirect(
         req.params.id ? `/admin/${section}/${req.params.id}/edit` : `/admin/${section}/new`
       );

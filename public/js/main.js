@@ -61,6 +61,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  /* ---------- Site settings preview ---------- */
+
+  const heroTitleInput = document.getElementById('s-heroTitle');
+  const heroSubtitleInput = document.getElementById('s-heroSubtitle');
+  const previewTitle = document.querySelector('[data-settings-preview-title]');
+  const previewSubtitle = document.querySelector('[data-settings-preview-subtitle]');
+
+  if (heroTitleInput && heroSubtitleInput && previewTitle && previewSubtitle) {
+    const updatePreview = () => {
+      previewTitle.textContent = heroTitleInput.value.trim() || 'Заголовок первого экрана';
+      previewSubtitle.textContent = heroSubtitleInput.value.trim() || 'Подзаголовок первого экрана';
+    };
+
+    heroTitleInput.addEventListener('input', updatePreview);
+    heroSubtitleInput.addEventListener('input', updatePreview);
+  }
+
   /* ---------- Toasts ---------- */
 
   const dismissToast = (toast) => {

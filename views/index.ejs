@@ -1,63 +1,52 @@
 <%- include('./partials/header', { activePage: 'home', title: title || 'PhotoPrint Service' }) %>
 
 <main id="main">
-  <section class="hero">
+  <section class="hero home-hero">
     <div class="container hero-grid">
       <div class="hero-copy">
-        <span class="kicker"><i class="fa-solid fa-bolt"></i> Быстро • Качественно • Доступно</span>
+        <span class="kicker"><i class="fa-solid fa-print"></i> Фото и документы — в одном месте</span>
         <h1><%= settings.heroTitle || 'Печать, копирование и оформление документов' %></h1>
         <p class="lead"><%= settings.heroSubtitle || 'Работаем для дома, офиса и бизнеса.' %></p>
 
         <div class="cta-row">
           <a class="btn btn-primary btn-lg" href="/services">
-            Посмотреть услуги <i class="fa-solid fa-arrow-right"></i>
+            Выбрать услугу <i class="fa-solid fa-arrow-right"></i>
           </a>
-          <a class="btn btn-secondary btn-lg" href="/contacts">Оставить заявку</a>
+          <a class="btn btn-secondary btn-lg" href="/contacts">Задать вопрос</a>
         </div>
 
-        <div class="hero-stats">
-          <div class="stat">
-            <strong>3 000+</strong>
-            <span>выполненных заказов</span>
-          </div>
-          <div class="stat">
-            <strong>15 мин</strong>
-            <span>среднее время печати</span>
-          </div>
-          <div class="stat">
-            <strong>5 лет</strong>
-            <span>на рынке услуг</span>
-          </div>
+        <div class="hero-highlights" aria-label="Наши направления">
+          <span><i class="fa-solid fa-camera"></i> Фотопечать</span>
+          <span><i class="fa-solid fa-copy"></i> Копирование</span>
+          <span><i class="fa-solid fa-file-lines"></i> Документы</span>
         </div>
       </div>
 
-      <aside class="hero-panel reveal">
-        <div class="hero-panel-title">
-          <i class="fa-solid fa-star"></i> Почему выбирают нас
+      <aside class="hero-art reveal" aria-label="Примеры работ">
+        <div class="hero-art-frame">
+          <% if (gallery.length) { %>
+            <img
+              src="<%= gallery[0].type === 'video' ? (gallery[0].thumbnail || '/gallery-placeholders/sample-1.svg') : gallery[0].url %>"
+              alt="<%= gallery[0].title %>"
+              fetchpriority="high"
+            />
+            <span class="hero-art-caption">
+              <i class="fa-regular fa-images"></i>
+              <span>
+                <strong><%= gallery[0].title %></strong>
+                <small>Работа нашей мастерской</small>
+              </span>
+            </span>
+          <% } else { %>
+            <div class="hero-art-empty">
+              <i class="fa-solid fa-camera-retro"></i>
+              <span>Ваши идеи — в печати</span>
+            </div>
+          <% } %>
         </div>
-
-        <div class="advantage">
-          <span class="advantage-icon"><i class="fa-solid fa-print"></i></span>
-          <div>
-            <strong>Современное оборудование</strong>
-            <p>Высокая скорость и отличное качество печати на любом формате.</p>
-          </div>
-        </div>
-
-        <div class="advantage">
-          <span class="advantage-icon"><i class="fa-solid fa-user-tie"></i></span>
-          <div>
-            <strong>Профессиональный подход</strong>
-            <p>Опытные специалисты помогут оформить документы без ошибок.</p>
-          </div>
-        </div>
-
-        <div class="advantage">
-          <span class="advantage-icon"><i class="fa-solid fa-tags"></i></span>
-          <div>
-            <strong>Доступные цены</strong>
-            <p>Прозрачная стоимость и выгодные тарифы для частных клиентов и бизнеса.</p>
-          </div>
+        <div class="hero-art-note">
+          <span class="hero-art-note-icon"><i class="fa-solid fa-heart"></i></span>
+          <span><strong>С заботой о деталях</strong><small>От файла до готового заказа</small></span>
         </div>
       </aside>
     </div>
@@ -100,6 +89,41 @@
         <a href="/services" class="btn btn-secondary">
           Все услуги <i class="fa-solid fa-arrow-right"></i>
         </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section home-process">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <span class="kicker"><i class="fa-solid fa-list-check"></i> Просто и понятно</span>
+          <h2>Как оформить заказ</h2>
+        </div>
+        <p class="section-copy">Выберите удобный способ — поможем разобраться с форматом и деталями.</p>
+      </div>
+      <div class="process-grid">
+        <article class="process-card reveal">
+          <span class="process-number">01</span>
+          <div>
+            <h3>Выберите услугу</h3>
+            <p>Посмотрите направления и цены или расскажите нам, что нужно сделать.</p>
+          </div>
+        </article>
+        <article class="process-card reveal">
+          <span class="process-number">02</span>
+          <div>
+            <h3>Обсудим детали</h3>
+            <p>Оставьте заявку на сайте или позвоните — уточним формат и пожелания.</p>
+          </div>
+        </article>
+        <article class="process-card reveal">
+          <span class="process-number">03</span>
+          <div>
+            <h3>Заберите заказ</h3>
+            <p>Когда всё будет готово, приходите к нам в удобное время работы.</p>
+          </div>
+        </article>
       </div>
     </div>
   </section>
@@ -150,7 +174,7 @@
       <div class="cta-banner reveal">
         <div>
           <h2>Есть задача? Мы поможем</h2>
-          <p>Оставьте заявку — перезвоним в течение 15 минут, подскажем цену и сроки по вашему заказу.</p>
+          <p>Оставьте заявку — обсудим детали, подскажем подходящую услугу и ответим на вопросы.</p>
         </div>
         <a href="/contacts" class="btn btn-lg">
           Оставить заявку <i class="fa-solid fa-arrow-right"></i>
@@ -180,7 +204,7 @@
               <i class="fa-solid fa-phone"></i>
               <div>
                 <strong>Телефон</strong>
-                <span><a href="tel:+74951234567"><%= settings.phone %></a></span>
+                <span><a href="tel:<%= String(settings.phone || '').replace(/[^\d+]/g, '') %>"><%= settings.phone %></a></span>
               </div>
             </li>
             <li>

@@ -50,6 +50,11 @@
             <label for="s-heroSubtitle">Подзаголовок</label>
             <textarea id="s-heroSubtitle" name="heroSubtitle"><%= settings.heroSubtitle %></textarea>
           </div>
+          <div class="settings-preview" aria-label="Предпросмотр первого экрана">
+            <span class="settings-preview-label"><i class="fa-regular fa-eye"></i> Предпросмотр на сайте</span>
+            <strong data-settings-preview-title><%= settings.heroTitle || 'Заголовок первого экрана' %></strong>
+            <span data-settings-preview-subtitle><%= settings.heroSubtitle || 'Подзаголовок первого экрана' %></span>
+          </div>
         </div>
 
         <div class="form-section">

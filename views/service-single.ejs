@@ -1,7 +1,7 @@
 <%- include('./partials/header', { activePage: 'services', title: service.title, description: service.description }) %>
 
 <main id="main">
-  <section class="page-hero">
+  <section class="page-hero service-detail-hero">
     <div class="container">
       <nav class="breadcrumbs" aria-label="Хлебные крошки">
         <a href="/">Главная</a>
@@ -11,49 +11,49 @@
         <span><%= service.title %></span>
       </nav>
       <h1><%= service.title %></h1>
-      <div class="meta-row" style="margin-top: 12px;">
+      <div class="meta-row service-detail-price">
         <span class="price-tag"><%= service.price %> ₽</span>
         <span class="price-unit">/ <%= service.priceUnit %></span>
       </div>
     </div>
   </section>
 
-  <section class="section">
-    <div class="container contact-grid">
-      <div class="card reveal">
-        <div class="service-media" style="border-radius: var(--radius-md);">
+  <section class="section service-detail-section">
+    <div class="container contact-grid service-detail-grid">
+      <div class="card reveal service-detail-card">
+        <div class="service-media service-detail-media">
           <img src="<%= service.image || '/gallery-placeholders/service-default.svg' %>" alt="<%= service.title %>" />
           <span class="service-icon"><i class="fa <%= service.icon || 'fa-print' %>"></i></span>
         </div>
-        <p class="text-muted"><%= service.description %></p>
+        <p class="text-muted service-detail-description"><%= service.description %></p>
         <ul class="contact-list">
           <li>
             <i class="fa-solid fa-clock"></i>
             <div>
               <strong>Сроки</strong>
-              <span>Быстро — от 15 минут после подтверждения заказа</span>
+              <span>Обсудим срок выполнения до подтверждения заказа</span>
             </div>
           </li>
           <li>
             <i class="fa-solid fa-circle-check"></i>
             <div>
               <strong>Контроль качества</strong>
-              <span>Проверяем каждый отпечаток перед выдачей</span>
+              <span>Уточним требования и проверим готовый заказ перед выдачей</span>
             </div>
           </li>
           <li>
             <i class="fa-solid fa-shield-halved"></i>
             <div>
               <strong>Оплата</strong>
-              <span>Наличные, карта и безналичный расчёт для компаний</span>
+              <span>Способы оплаты можно уточнить при оформлении заказа</span>
             </div>
           </li>
         </ul>
       </div>
 
-      <div class="card reveal" style="position: sticky; top: calc(var(--header-height) + 20px);">
+      <div class="card reveal service-order-card">
         <h3>Оставить заявку</h3>
-        <p class="text-muted" style="font-size: 0.93rem;">Заполните форму — перезвоним и подтвердим детали заказа.</p>
+        <p class="text-muted service-order-copy">Заполните форму — свяжемся с вами и уточним детали заказа.</p>
         <form data-form="order">
           <div class="hp-field" aria-hidden="true">
             <input type="text" name="website" tabindex="-1" autocomplete="off" value="" />

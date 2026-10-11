@@ -18,7 +18,7 @@ const request = require('supertest');
 const bcrypt = require('bcryptjs');
 
 const { app, startApp } = require('../app');
-const { sequelize, User, Service } = require('../models');
+const { sequelize, User, Service, GalleryItem, Order } = require('../models');
 
 let csrfToken;
 
@@ -75,6 +75,17 @@ before(async () => {
     },
   });
 
+  await GalleryItem.findOrCreate({
+    where: { title: 'Тестовая работа' },
+    defaults: {
+      title: 'Тестовая работа',
+      type: 'image',
+      url: '/gallery-placeholders/sample-1.svg',
+      category: 'photo',
+      order: 1,
+    },
+  });
+
   const home = await request(app).get('/');
   assert.equal(home.status, 200);
 
@@ -91,9 +102,36 @@ after(async () => {
 test('GET / returns 200 with CSP header', async () => {
   const res = await request(app).get('/');
   assert.equal(res.status, 200);
+  assert.match(res.text, /class="hero home-hero"/);
+  assert.match(res.text, /Как оформить заказ/);
+  assert.match(res.text, /data-form="order"/);
   const csp = res.headers['content-security-policy'] || '';
   assert.match(csp, /default-src 'self'/);
   assert.match(csp, /script-src 'self'/);
+});
+
+test('GET /contacts renders the responsive order form', async () => {
+  const res = await request(app).get('/contacts');
+  assert.equal(res.status, 200);
+  assert.match(res.text, /href="tel:\+74951234567"/);
+  assert.match(res.text, /data-form="order"/);
+});
+
+test('GET /services, service details and /gallery preserve their public flows', async () => {
+  const [services, service, gallery] = await Promise.all([
+    request(app).get('/services'),
+    request(app).get('/services/test-service'),
+    request(app).get('/gallery'),
+  ]);
+
+  assert.equal(services.status, 200);
+  assert.match(services.text, /class="page-hero service-list-hero"/);
+  assert.equal(service.status, 200);
+  assert.match(service.text, /class="[^"]*service-order-card/);
+  assert.match(service.text, /data-form="order"/);
+  assert.equal(gallery.status, 200);
+  assert.match(gallery.text, /data-gallery-grid/);
+  assert.match(gallery.text, /data-filter="all"/);
 });
 
 test('GET /unknown renders 404 page', async () => {
@@ -105,6 +143,7 @@ test('GET /privacy renders privacy page', async () => {
   const res = await request(app).get('/privacy');
   assert.equal(res.status, 200);
   assert.match(res.text, /Политика конфиденциальности/);
+  assert.match(res.text, /class="card privacy-content"/);
 });
 
 test('GET /sitemap.xml includes static and service URLs', async () => {
@@ -163,18 +202,22 @@ test('GET /admin without session redirects to login', async () => {
 });
 
 test('POST /admin/login without CSRF token does not authenticate', async () => {
+  const jar = { csrf_token: csrfToken };
   const res = await request(app)
     .post('/admin/login')
-    .set('Cookie', `csrf_token=${csrfToken}`)
+    .set('Cookie', cookieHeader(jar))
+    .set('Referer', '/admin/login')
     .set('Accept', 'text/html')
     .type('form')
     .send({ username: 'admin-test', password: 'Test1234!' });
 
   assert.equal(res.status, 302);
-  const authCookie = collectCookies(res).auth_token;
+  assert.equal(res.headers.location, '/admin/login');
+  collectCookies(res, jar);
+  const authCookie = jar.auth_token;
   assert.equal(authCookie, undefined, 'auth cookie must not be issued');
 
-  const loginPage = await request(app).get('/admin/login');
+  const loginPage = await request(app).get('/admin/login').set('Cookie', cookieHeader(jar));
   assert.match(loginPage.text, /Недействительный токен формы/, 'CSRF failure flash must render');
 });
 
@@ -208,6 +251,95 @@ test('admin login, logout and token revocation flow', async () => {
   const afterLogout = await request(app).get('/admin').set('Cookie', cookieHeader(jar));
   assert.equal(afterLogout.status, 302);
   assert.match(afterLogout.headers.location, /\/admin\/login/);
+});
+
+test('admin dashboard surfaces new orders with contact and quick status actions', async () => {
+  const order = await Order.create({
+    name: 'Клиент дашборда',
+    phone: '+7 900 111-22-33',
+    email: 'client@example.com',
+    service: 'Фото 10x15',
+    message: 'Проверка быстрых действий',
+  });
+  const jar = await loginJar();
+
+  try {
+    const dashboard = await request(app).get('/admin').set('Cookie', cookieHeader(jar));
+    assert.equal(dashboard.status, 200);
+    assert.match(dashboard.text, /Новые заявки/);
+    assert.match(dashboard.text, /tel:\+79001112233/);
+    assert.match(dashboard.text, /mailto:client@example\.com/);
+    assert.match(dashboard.text, new RegExp(`/admin/orders/${order.id}/status`));
+
+    const orders = await request(app).get('/admin/orders').set('Cookie', cookieHeader(jar));
+    assert.equal(orders.status, 200);
+    assert.match(orders.text, /href="tel:\+79001112233"/);
+    assert.match(orders.text, /href="mailto:client@example\.com"/);
+
+    const settings = await request(app).get('/admin/settings').set('Cookie', cookieHeader(jar));
+    assert.equal(settings.status, 200);
+    assert.match(settings.text, /data-settings-preview-title/);
+    assert.match(settings.text, /data-settings-preview-subtitle/);
+
+    const updated = await request(app)
+      .post(`/admin/orders/${order.id}/status`)
+      .set('Cookie', cookieHeader(jar))
+      .type('form')
+      .send({ _csrf: csrfToken, status: 'in_progress' });
+    assert.equal(updated.status, 302);
+    assert.equal((await order.reload()).status, 'in_progress');
+  } finally {
+    await order.destroy();
+  }
+});
+
+test('admin catalog search and pagination preserve filters', async () => {
+  const services = await Promise.all(
+    Array.from({ length: 21 }, (_, index) =>
+      Service.create({
+        title: `Пагинация ${index}`,
+        slug: `pagination-${Date.now()}-${index}`,
+        description: 'Тестовый элемент',
+        price: 1,
+        priceUnit: 'шт',
+        icon: 'fa-print',
+        order: index,
+        isActive: true,
+      })
+    )
+  );
+  const galleryItems = await Promise.all(
+    Array.from({ length: 21 }, (_, index) =>
+      GalleryItem.create({
+        title: `Пагинация ${index}`,
+        type: 'image',
+        url: '/gallery-placeholders/sample-1.svg',
+        category: 'pagination',
+        description: 'Тестовый элемент',
+        order: index,
+      })
+    )
+  );
+  const jar = await loginJar();
+
+  try {
+    const servicesPage = await request(app)
+      .get('/admin/services?q=Pagin&page=2')
+      .set('Cookie', cookieHeader(jar));
+    assert.equal(servicesPage.status, 200);
+    assert.match(servicesPage.text, /Стр\. 2 из 2/);
+    assert.match(servicesPage.text, /q=Pagin&amp;page=1/);
+
+    const galleryPage = await request(app)
+      .get('/admin/gallery?q=Pagin&page=2')
+      .set('Cookie', cookieHeader(jar));
+    assert.equal(galleryPage.status, 200);
+    assert.match(galleryPage.text, /Стр\. 2 из 2/);
+    assert.match(galleryPage.text, /q=Pagin&amp;page=1/);
+  } finally {
+    await Promise.all(services.map((service) => service.destroy()));
+    await Promise.all(galleryItems.map((item) => item.destroy()));
+  }
 });
 
 test('multipart admin form requires CSRF token (regression)', async () => {
@@ -246,17 +378,41 @@ test('multipart admin form requires CSRF token (regression)', async () => {
 
 test('admin form validation rejects invalid service payload', async () => {
   const jar = await loginJar();
-  const title = `Плохая услуга ${Date.now()}`;
+  const title = `Черновик услуги ${Date.now()}`;
 
   const res = await request(app)
     .post('/admin/services')
     .set('Cookie', cookieHeader(jar))
     .set('Accept', 'text/html')
     .field('_csrf', csrfToken)
-    .field('title', '')
+    .field('title', title)
     .field('price', 'не число');
 
   assert.equal(res.status, 302);
   assert.match(res.headers.location, /\/admin\/services\/new/);
   assert.equal(await Service.findOne({ where: { title } }), null);
+
+  collectCookies(res, jar);
+  const form = await request(app).get('/admin/services/new').set('Cookie', cookieHeader(jar));
+  assert.equal(form.status, 200);
+  assert.match(form.text, new RegExp(`id="f-title" name="title" value="${title}"`));
+  assert.match(form.text, /value="не число"/);
+
+  const galleryTitle = `Черновик галереи ${Date.now()}`;
+  const galleryRes = await request(app)
+    .post('/admin/gallery')
+    .set('Cookie', cookieHeader(jar))
+    .set('Accept', 'text/html')
+    .field('_csrf', csrfToken)
+    .field('title', galleryTitle)
+    .field('category', 'family photos')
+    .field('order', '-1');
+
+  assert.equal(galleryRes.status, 302);
+  assert.match(galleryRes.headers.location, /\/admin\/gallery\/new/);
+  collectCookies(galleryRes, jar);
+  const galleryForm = await request(app).get('/admin/gallery/new').set('Cookie', cookieHeader(jar));
+  assert.equal(galleryForm.status, 200);
+  assert.match(galleryForm.text, new RegExp(`id="g-title" name="title" value="${galleryTitle}"`));
+  assert.match(galleryForm.text, /id="g-category" name="category"[^>]*value="family photos"/);
 });

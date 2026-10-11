@@ -1,7 +1,7 @@
 <%- include('./partials/header', { activePage: 'services', title: 'Услуги', description: 'Полный список услуг: печать фотографий, копирование, оформление документов и набор текста.' }) %>
 
 <main id="main">
-  <section class="page-hero">
+  <section class="page-hero service-list-hero">
     <div class="container">
       <nav class="breadcrumbs" aria-label="Хлебные крошки">
         <a href="/">Главная</a>
@@ -13,7 +13,7 @@
     </div>
   </section>
 
-  <section class="section">
+  <section class="section service-list-section">
     <div class="container">
       <% if (!services.length) { %>
         <div class="card empty-state">
