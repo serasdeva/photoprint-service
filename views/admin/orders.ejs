@@ -52,17 +52,17 @@
           <tbody>
             <% orders.forEach((order) => { %>
               <tr>
-                <td>
+                <td data-label="Клиент">
                   <span class="cell-title"><%= order.name %></span>
                   <a class="cell-sub admin-contact-link" href="tel:<%= String(order.phone || '').replace(/[^\d+]/g, '') %>"><%= order.phone %></a>
                   <% if (order.email) { %>
                     <a class="cell-sub admin-contact-link" href="mailto:<%= order.email %>"><%= order.email %></a>
                   <% } %>
                 </td>
-                <td><%= order.service || '—' %></td>
-                <td><span class="truncate" title="<%= order.message || '' %>"><%= order.message || '—' %></span></td>
-                <td style="white-space: nowrap;"><%= new Date(order.createdAt).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></td>
-                <td>
+                <td data-label="Услуга"><%= order.service || '—' %></td>
+                <td data-label="Сообщение"><span class="truncate" title="<%= order.message || '' %>"><%= order.message || '—' %></span></td>
+                <td data-label="Дата" style="white-space: nowrap;"><%= new Date(order.createdAt).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></td>
+                <td data-label="Статус">
                   <div class="status-cell">
                     <% if (order.status === 'new') { %>
                       <span class="badge badge-new">Новая</span>
@@ -82,7 +82,7 @@
                     </form>
                   </div>
                 </td>
-                <td>
+                <td data-label="Действия">
                   <form method="POST" action="/admin/orders/<%= order.id %>/delete" style="display: inline;" data-confirm="Удалить заявку от «<%= order.name %>?»">
                     <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
                     <button type="submit" class="btn btn-danger btn-sm">

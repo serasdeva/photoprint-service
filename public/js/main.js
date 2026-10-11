@@ -19,7 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const closeNav = (toggle, panel) => {
     toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-label', 'Открыть меню');
     panel.classList.remove('open');
+    panel.inert = window.matchMedia('(max-width: 980px)').matches;
     setBackdropOpen(false);
   };
 
@@ -27,9 +29,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const panel = document.getElementById(toggle.getAttribute('aria-controls'));
     if (!panel) return;
 
+    const mobileNav = window.matchMedia('(max-width: 980px)');
+    const updateNavAccessibility = () => {
+      const isOpen = panel.classList.contains('open');
+      panel.inert = mobileNav.matches && !isOpen;
+      toggle.setAttribute('aria-label', isOpen ? 'Закрыть меню' : 'Открыть меню');
+    };
+
+    updateNavAccessibility();
+    mobileNav.addEventListener('change', updateNavAccessibility);
+
     toggle.addEventListener('click', () => {
       const isOpen = panel.classList.toggle('open');
       toggle.setAttribute('aria-expanded', String(isOpen));
+      updateNavAccessibility();
       setBackdropOpen(isOpen);
     });
 
@@ -57,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const sidebar = document.querySelector('.admin-sidebar');
       if (sidebar) sidebar.classList.remove('open');
       const toggle = document.querySelector('[data-nav-toggle="admin-sidebar"]');
-      if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      if (toggle && sidebar) closeNav(toggle, sidebar);
     });
   });
 

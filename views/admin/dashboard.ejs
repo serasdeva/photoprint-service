@@ -73,17 +73,17 @@
           <tbody>
             <% newOrders.forEach((order) => { %>
               <tr>
-                <td>
+                <td data-label="Клиент">
                   <span class="cell-title"><%= order.name %></span>
                   <a class="cell-sub admin-contact-link" href="tel:<%= String(order.phone || '').replace(/[^\d+]/g, '') %>"><%= order.phone %></a>
                   <% if (order.email) { %>
                     <a class="cell-sub admin-contact-link" href="mailto:<%= order.email %>"><%= order.email %></a>
                   <% } %>
                 </td>
-                <td><%= order.service || '—' %></td>
-                <td><span class="truncate" title="<%= order.message || '' %>"><%= order.message || '—' %></span></td>
-                <td><%= new Date(order.createdAt).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></td>
-                <td>
+                <td data-label="Услуга"><%= order.service || '—' %></td>
+                <td data-label="Сообщение"><span class="truncate" title="<%= order.message || '' %>"><%= order.message || '—' %></span></td>
+                <td data-label="Дата"><%= new Date(order.createdAt).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></td>
+                <td data-label="Быстрые действия">
                   <form method="POST" action="/admin/orders/<%= order.id %>/status">
                     <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
                     <input type="hidden" name="status" value="in_progress" />
@@ -126,13 +126,13 @@
           <tbody>
             <% recentOrders.forEach((order) => { %>
               <tr>
-                <td>
+                <td data-label="Клиент">
                   <span class="cell-title"><%= order.name %></span>
                   <span class="cell-sub"><%= order.phone %></span>
                 </td>
-                <td><%= order.service || '—' %></td>
-                <td><%= new Date(order.createdAt).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></td>
-                <td>
+                <td data-label="Услуга"><%= order.service || '—' %></td>
+                <td data-label="Дата"><%= new Date(order.createdAt).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></td>
+                <td data-label="Статус">
                   <% if (order.status === 'new') { %>
                     <span class="badge badge-new"><i class="fa-solid fa-sparkles" style="font-size: 0.65rem;"></i> Новая</span>
                   <% } else if (order.status === 'in_progress') { %>

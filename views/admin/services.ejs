@@ -49,7 +49,7 @@
           <tbody>
             <% services.forEach((service) => { %>
               <tr>
-                <td>
+                <td data-label="Услуга">
                   <div class="cell-with-thumb">
                     <img class="table-thumb" src="<%= service.image || '/gallery-placeholders/service-default.svg' %>" alt="" />
                     <div>
@@ -58,16 +58,16 @@
                     </div>
                   </div>
                 </td>
-                <td><span class="cell-title"><%= service.price %> ₽</span> <span class="cell-sub">/ <%= service.priceUnit %></span></td>
-                <td><%= service.order %></td>
-                <td>
+                <td data-label="Цена"><span class="cell-title"><%= service.price %> ₽</span> <span class="cell-sub">/ <%= service.priceUnit %></span></td>
+                <td data-label="Порядок"><%= service.order %></td>
+                <td data-label="Статус">
                   <% if (service.isActive) { %>
                     <span class="badge badge-done">Активна</span>
                   <% } else { %>
                     <span class="badge badge-neutral">Скрыта</span>
                   <% } %>
                 </td>
-                <td>
+                <td data-label="Действия">
                   <div class="table-actions">
                     <a href="/admin/services/<%= service.id %>/edit" class="btn btn-secondary btn-sm">
                       <i class="fa-solid fa-pen"></i> Изменить

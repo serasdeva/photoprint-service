@@ -49,7 +49,7 @@
           <tbody>
             <% items.forEach((item) => { %>
               <tr>
-                <td>
+                <td data-label="Элемент">
                   <div class="cell-with-thumb">
                     <% if (item.type === 'video') { %>
                       <span class="table-thumb media-placeholder" title="Видео без превью"><i class="fa-solid fa-play"></i></span>
@@ -64,16 +64,16 @@
                     </div>
                   </div>
                 </td>
-                <td>
+                <td data-label="Тип">
                   <% if (item.type === 'video') { %>
                     <span class="badge badge-neutral"><i class="fa-solid fa-video" style="font-size: 0.65rem;"></i> Видео</span>
                   <% } else { %>
                     <span class="badge badge-neutral"><i class="fa-regular fa-image" style="font-size: 0.65rem;"></i> Фото</span>
                   <% } %>
                 </td>
-                <td><%= item.category %></td>
-                <td><%= item.order %></td>
-                <td>
+                <td data-label="Категория"><%= item.category %></td>
+                <td data-label="Порядок"><%= item.order %></td>
+                <td data-label="Действия">
                   <div class="table-actions">
                     <a href="/admin/gallery/<%= item.id %>/edit" class="btn btn-secondary btn-sm">
                       <i class="fa-solid fa-pen"></i> Изменить
