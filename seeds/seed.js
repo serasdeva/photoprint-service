@@ -29,8 +29,8 @@ async function seed() {
     ['email', 'hello@photoprint.local'],
     ['address', 'пгт. Яшкино, Суворово 8а'],
     ['workHours', 'Пн–Сб: 09:00–20:00'],
-    ['heroTitle', 'Печать, копирование и оформление документов'],
-    ['heroSubtitle', 'Быстро, качественно и по доступной цене для дома, офиса и бизнеса.'],
+    ['heroTitle', 'Печать фото и документов без лишних хлопот'],
+    ['heroSubtitle', 'Помогаем быстро сделать качественные фото, копии, распечатки и оформление документов для дома, офиса и бизнеса.'],
     [
       'mapEmbed',
       '<iframe src="https://www.google.com/maps?q=%D0%BF%D0%B3%D1%82.%20%D0%8F%D1%88%D0%BA%D0%B8%D0%BD%D0%BE%2C%20%D0%A1%D1%83%D0%B2%D0%BE%D1%80%D0%BE%D0%B2%D0%BE%208%D0%B0&z=15&output=embed" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>',
@@ -46,9 +46,9 @@ async function seed() {
 
   const services = [
     {
-      title: 'Фото 10x15',
+      title: 'Фото 10×15',
       slug: 'foto-10x15',
-      description: 'Печать фотографий 10×15 для документов, подарков и семейных архивов.',
+      description: 'Печать семейных фото, снимков для паспорта, документов и памятных подарков.',
       price: 25,
       priceUnit: 'шт',
       icon: 'fa-camera',
@@ -56,9 +56,9 @@ async function seed() {
       isActive: true,
     },
     {
-      title: 'Фото A4',
-      slug: 'foto-a4',
-      description: 'Красочная печать на фотобумаге формата A4.',
+      title: 'Печать A4 и постеры',
+      slug: 'pechat-a4-i-postery',
+      description: 'Печать фото, рекламных материалов и плакатов в хорошем качестве на бумаге A4 и крупнее.',
       price: 90,
       priceUnit: 'лист',
       icon: 'fa-image',
@@ -66,9 +66,9 @@ async function seed() {
       isActive: true,
     },
     {
-      title: 'Копирование',
-      slug: 'kopirovanie',
-      description: 'Черно-белое и цветное копирование документов.',
+      title: 'Копирование и сканирование',
+      slug: 'kopirovanie-i-skanirovanie',
+      description: 'Черно-белое и цветное копирование документов, сканирование и подготовка бумаг к печати.',
       price: 10,
       priceUnit: 'лист',
       icon: 'fa-copy',
@@ -78,7 +78,7 @@ async function seed() {
     {
       title: 'Оформление документов',
       slug: 'oformlenie-dokumentov',
-      description: 'Помощь в заполнении и оформлении документов, бланков и заявлений.',
+      description: 'Помощь в заполнении, распечатке и оформлении заявлений, бланков и официальных документов.',
       price: 250,
       priceUnit: 'услуга',
       icon: 'fa-file-signature',
@@ -86,9 +86,9 @@ async function seed() {
       isActive: true,
     },
     {
-      title: 'Набор текста',
-      slug: 'nabor-teksta',
-      description: 'Печать и набор текста в Word, PDF, таблицы и отчеты.',
+      title: 'Дизайн и набор текста',
+      slug: 'dizajn-i-nabor-teksta',
+      description: 'Набор текста, подготовка таблиц, отчетов и файлов для дальнейшей печати в нужном формате.',
       price: 80,
       priceUnit: 'страница',
       icon: 'fa-keyboard',
