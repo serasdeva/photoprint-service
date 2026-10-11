@@ -109,19 +109,19 @@ html[data-theme='dark'] .public-site {
   gap: 9px;
   padding: 10px 18px;
   border-radius: var(--radius-pill);
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent-warm), var(--accent-warm-hover));
   color: var(--accent-contrast);
   font-weight: 700;
   font-size: 0.92rem;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 10px 24px rgba(249, 115, 22, 0.22);
   transition:
-    background-color 0.18s ease,
-    transform 0.18s ease;
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
 }
 
 .phone-btn:hover {
-  background: var(--accent-hover);
   transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(249, 115, 22, 0.28);
 }
 
 .phone-btn i {

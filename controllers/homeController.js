@@ -2,13 +2,18 @@ const { Service, GalleryItem, Setting } = require('../models');
 
 const defaultSettings = {
   siteName: 'PhotoPrint Service',
-  phone: '+7 (495) 123-45-67',
-  email: 'hello@photoprint.local',
-  address: 'пгт. Яшкино, Суворово 8а',
+  phone: '+7 (495) 555-11-22',
+  email: 'hello@photoprint-service.ru',
+  address: 'г. Москва, ул. Тихая, 12',
   workHours: 'Пн–Сб: 09:00–20:00',
+<<<<<<< HEAD
   heroTitle: 'Печать фото и документов без лишних хлопот',
   heroSubtitle:
     'Помогаем быстро сделать качественные фото, копии, распечатки и оформление документов для дома, офиса и бизнеса.',
+=======
+  heroTitle: 'Печать фото, копирование и оформление документов в день обращения',
+  heroSubtitle: 'Для дома, офиса и бизнеса — оперативно, качественно и без лишних затрат.',
+>>>>>>> 94dae35 (11.10.2026)
   mapEmbed:
     '<iframe src="https://www.google.com/maps?q=%D0%BF%D0%B3%D1%82.%20%D0%8F%D1%88%D0%BA%D0%B8%D0%BD%D0%BE%2C%20%D0%A1%D1%83%D0%B2%D0%BE%D1%80%D0%BE%D0%B2%D0%BE%208%D0%B0&z=15&output=embed" width="100%" height="100%" frameborder="0" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>',
 };

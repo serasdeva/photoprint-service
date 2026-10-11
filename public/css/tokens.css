@@ -10,21 +10,24 @@
   --accent: #2563eb;
   --accent-hover: #1d4ed8;
   --accent-active: #1e40af;
-  --accent-soft: #eff6ff;
-  --accent-soft-2: #dbeafe;
+  --accent-soft: #edf4ff;
+  --accent-soft-2: #dfeeff;
   --accent-contrast: #ffffff;
+  --accent-warm: #f97316;
+  --accent-warm-hover: #ea580c;
+  --accent-warm-soft: #fff3e8;
 
   /* Neutrals */
-  --bg: #f7f8fa;
-  --bg-grad: radial-gradient(circle at top left, rgba(37, 99, 235, 0.07), transparent 32%);
+  --bg: #f8f7f4;
+  --bg-grad: radial-gradient(circle at top left, rgba(37, 99, 235, 0.09), transparent 32%);
   --surface: #ffffff;
-  --surface-2: #f3f5f8;
-  --surface-3: #e9edf3;
+  --surface-2: #f5f4f1;
+  --surface-3: #ece7df;
   --text: #111827;
   --text-2: #4b5563;
   --text-3: #8a94a6;
-  --border: #e5e7eb;
-  --border-strong: #d3d9e2;
+  --border: #e8e2d9;
+  --border-strong: #d7cfc2;
   --overlay: rgba(9, 14, 24, 0.62);
 
   /* Feedback */

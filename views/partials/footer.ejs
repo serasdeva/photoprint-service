@@ -1,9 +1,9 @@
 <%
   var siteSettings = (typeof settings !== 'undefined' && settings) ? settings : {};
-  var footerPhone = siteSettings.phone || '+7 (495) 123-45-67';
+  var footerPhone = siteSettings.phone || '+7 (495) 555-11-22';
   var footerPhoneHref = 'tel:' + String(footerPhone).replace(/[^\d+]/g, '');
-  var footerEmail = siteSettings.email || 'hello@photoprint.local';
-  var footerAddress = siteSettings.address || 'пгт. Яшкино, Суворово 8а';
+  var footerEmail = siteSettings.email || 'hello@photoprint-service.ru';
+  var footerAddress = siteSettings.address || 'г. Москва, ул. Тихая, 12';
   var footerHours = siteSettings.workHours || 'Пн–Сб: 09:00–20:00';
 %>
     <footer class="site-footer">
