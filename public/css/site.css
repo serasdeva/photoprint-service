@@ -618,7 +618,7 @@ html[data-theme='dark'] .public-site {
 
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));
   gap: 22px;
 }
 
@@ -1287,6 +1287,11 @@ html[data-theme='dark'] .public-site {
     grid-template-columns: 1fr;
   }
 
+  .promo-grid,
+  .feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .home-hero .hero-grid {
     grid-template-columns: 1fr;
     gap: 38px;
@@ -1387,6 +1392,11 @@ html[data-theme='dark'] .public-site {
   }
 
   .hero-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .promo-grid,
+  .feature-grid {
     grid-template-columns: 1fr;
   }
 
