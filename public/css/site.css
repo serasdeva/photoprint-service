@@ -394,9 +394,9 @@ html[data-theme='dark'] .public-site {
 }
 
 .hero-art {
-  position: relative;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
-  display: grid;
   gap: 14px;
 }
 
@@ -484,9 +484,10 @@ html[data-theme='dark'] .public-site {
 }
 
 .hero-art-note {
+  position: static;
   display: flex;
   align-items: center;
-  justify-self: end;
+  align-self: flex-end;
   gap: 12px;
   max-width: 100%;
   padding: 14px 18px;
