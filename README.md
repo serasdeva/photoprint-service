@@ -21,6 +21,14 @@ Node.js + Express сервис фотопечати, копирования и �
 - Галерея: CRUD, фото и видео (MP4), категории с подсказками (datalist), удаление файла
 - Заявки: список, фильтр по статусу, поиск по имени/телефону/услуге, смена статуса, удаление
 - Настройки сайта: название, контакты, hero-блок, HTML-код карты (белый список ключей)
+- Настройки Telegram-бота: chat id администратора, приветствие, уведомления, тестовое сообщение
+
+### Telegram-бот (опционально)
+
+- Уведомления о новых заявках (с сайта и из бота) c быстрыми кнопками «В работу» / «Готово»
+- Приём заявок клиентом через пошаговый диалог, «Мои заявки» со статусами
+- Каталог услуг, галерея, контакты, FAQ, подписка на новости и рассылки
+- Админ-команды: `/orders`, `/stats`, `/broadcast`, `/notify on|off`, `/whoami`
 
 ## Быстрый старт
 
@@ -46,6 +54,27 @@ npm start
 | `ADMIN_USERNAME` | Логин администратора (при `npm run seed`)                            |
 | `ADMIN_PASSWORD` | Пароль администратора (обязателен для `npm run seed`)                |
 | `MAIL_*`         | SMTP для уведомлений о заявках (если не заданы — почта пропускается) |
+| `BOT_ENABLED`    | Включить Telegram-бота (`true`/`false`)                              |
+| `BOT_TOKEN`      | Токен бота от @BotFather (без токена бот не запускается)             |
+| `BOT_USERNAME`   | Имя бота без `@` — для ссылки `https://t.me/…` на сайте и в панели   |
+| `BOT_ADMIN_CHAT_ID` | Chat id администратора (можно задать и в админке)                 |
+
+## Telegram-бот
+
+Бот работает в режиме long polling в том же процессе, что и сайт (запуск из `server.js`),
+поэтому БД SQLite не открывается двумя процессами. Если `BOT_TOKEN` не задан или
+`BOT_ENABLED=false`, бот просто не стартует, а сайт работает как обычно.
+
+Настройка:
+
+1. Создайте бота у [@BotFather](https://t.me/BotFather) и получите токен.
+2. В `.env` укажите `BOT_ENABLED=true`, `BOT_TOKEN=…`, при желании `BOT_USERNAME=…`.
+3. Перезапустите сервер (`npm start`).
+4. Напишите боту `/whoami`, чтобы узнать свой chat id.
+5. Откройте `/admin/settings/telegram`, укажите chat id, включите уведомления и отправьте тест.
+
+> Важно: держите PM2 в режиме `instances: 1` (`deploy/ecosystem.config.js`). Несколько
+> инстансов с long polling будут получать дубли апдейтов.
 
 ## Вход в админку
 
@@ -85,11 +114,12 @@ app.js                 # Express: middleware, роуты, статика, обр
 server.js              # Точка входа
 config/db.js           # Sequelize + SQLite (data/photoprint.sqlite, DB_STORAGE для тестов)
 controllers/           # Логика страниц и API
-models/                # Service, GalleryItem, Order, Setting, User, RevokedToken
+models/                # Service, GalleryItem, Order, Setting, User, RevokedToken, TelegramSubscriber
 routes/                # public, admin, api
 middleware/            # auth (JWT-cookie + отзыв), csrf (double-submit), upload (multer)
 views/                 # EJS: публичные страницы + views/admin
 public/                # css, js, uploads
+telegram/              # Бот: config, bot, notifications, keyboards, handlers/*
 seeds/seed.js          # Демо-данные
 tests/                 # Интеграционные тесты (node:test + supertest)
 .github/workflows/     # CI: lint + format check + tests

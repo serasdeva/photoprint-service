@@ -5,6 +5,7 @@ const { Order } = require('./Order');
 const { User } = require('./User');
 const { Setting } = require('./Setting');
 const { RevokedToken } = require('./RevokedToken');
+const { TelegramSubscriber } = require('./TelegramSubscriber');
 
 module.exports = {
   sequelize,
@@ -14,4 +15,5 @@ module.exports = {
   User,
   Setting,
   RevokedToken,
+  TelegramSubscriber,
 };

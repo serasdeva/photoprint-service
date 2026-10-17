@@ -23,6 +23,9 @@ const {
   deleteOrder,
   renderSettingsPage,
   saveSettings,
+  renderTelegramPage,
+  saveTelegramSettings,
+  sendTelegramTest,
 } = require('../controllers/adminController');
 
 const router = express.Router();
@@ -219,5 +222,9 @@ router.post('/orders/:id/delete', asyncHandler(deleteOrder));
 
 router.get('/settings', asyncHandler(renderSettingsPage));
 router.post('/settings', asyncHandler(saveSettings));
+
+router.get('/settings/telegram', asyncHandler(renderTelegramPage));
+router.post('/settings/telegram', asyncHandler(saveTelegramSettings));
+router.post('/settings/telegram/test', asyncHandler(sendTelegramTest));
 
 module.exports = router;

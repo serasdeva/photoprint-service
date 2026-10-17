@@ -1,6 +1,7 @@
 const { validationResult } = require('express-validator');
 const { Order } = require('../models');
 const { sendOrderNotification } = require('../utils/mailer');
+const { notifyAdminNewOrder } = require('../telegram/notifications');
 
 async function createOrder(req, res) {
   const errors = validationResult(req);
@@ -28,6 +29,12 @@ async function createOrder(req, res) {
       await sendOrderNotification(order.toJSON());
     } catch (mailError) {
       console.error('Mail send failed:', mailError.message);
+    }
+
+    try {
+      await notifyAdminNewOrder(order.toJSON());
+    } catch (telegramError) {
+      console.error('Telegram notify failed:', telegramError.message);
     }
 
     return res.status(201).json({

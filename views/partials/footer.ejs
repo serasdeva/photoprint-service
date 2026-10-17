@@ -50,6 +50,10 @@
           <a href="/privacy">Политика конфиденциальности</a>
           <span class="divider-dot" aria-hidden="true"></span>
           <a href="/sitemap.xml">Карта сайта</a>
+          <% if (typeof telegramUrl !== 'undefined' && telegramUrl) { %>
+            <span class="divider-dot" aria-hidden="true"></span>
+            <a href="<%= telegramUrl %>" target="_blank" rel="noopener"><i class="fa-brands fa-telegram"></i> Telegram-бот</a>
+          <% } %>
         </div>
         <a href="#" class="to-top" aria-label="Вернуться наверх"><i class="fa-solid fa-arrow-up"></i> Наверх</a>
       </div>

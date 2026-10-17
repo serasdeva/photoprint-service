@@ -463,6 +463,21 @@
   margin-top: 0;
 }
 
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.checkbox-row input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+}
+
 /* ---------- Status control ---------- */
 
 .status-cell {

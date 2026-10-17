@@ -38,6 +38,19 @@ const Order = sequelize.define(
       allowNull: false,
       defaultValue: 'new',
     },
+    source: {
+      type: DataTypes.ENUM('site', 'telegram'),
+      allowNull: false,
+      defaultValue: 'site',
+    },
+    telegramChatId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    telegramUserId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     timestamps: true,

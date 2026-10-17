@@ -1,0 +1,66 @@
+<%- include('./partials/start') %>
+<%- include('./partials/topbar') %>
+
+  <div class="page-header">
+    <div>
+      <h1>Telegram-бот</h1>
+      <p class="page-sub">Уведомления о заявках, статусы и рассылки</p>
+    </div>
+  </div>
+
+  <% if (!botConfigured) { %>
+    <div class="admin-card">
+      <p><strong>Бот не сконфигурирован.</strong> Добавьте в <code>.env</code> переменные <code>BOT_TOKEN</code>
+        и <code>BOT_ENABLED=true</code>, затем перезапустите сервер.</p>
+    </div>
+  <% } %>
+
+  <div class="admin-card">
+    <form method="POST" action="/admin/settings/telegram">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <div class="form-grid">
+        <div class="form-section">
+          <div class="form-section-title"><i class="fa-brands fa-telegram"></i> Уведомления</div>
+          <div>
+            <label for="t-chatId">Chat id администратора</label>
+            <input id="t-chatId" name="telegramAdminChatId" value="<%= telegram.adminChatId %>" placeholder="например, 123456789" />
+            <div class="form-hint">Узнать свой id можно командой <code>/whoami</code> в боте.</div>
+          </div>
+          <div>
+            <label for="t-welcome">Приветственное сообщение</label>
+            <textarea id="t-welcome" name="telegramWelcome" rows="4"><%= telegram.welcome %></textarea>
+          </div>
+          <label class="checkbox-row">
+            <input type="checkbox" name="telegramNotifyOrders" value="true" <%= telegram.notifyOrders ? 'checked' : '' %> />
+            <span>Отправлять уведомления о новых заявках</span>
+          </label>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title"><i class="fa-solid fa-link"></i> Ссылка на бота</div>
+          <% if (deepLink) { %>
+            <p><a href="<%= deepLink %>" target="_blank" rel="noopener"><%= deepLink %></a></p>
+          <% } else { %>
+            <p class="form-hint">Укажите <code>BOT_USERNAME</code> в <code>.env</code>, чтобы получить ссылку вида https://t.me/…</p>
+          <% } %>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            <i class="fa-solid fa-check"></i> Сохранить
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="admin-card">
+    <form method="POST" action="/admin/settings/telegram/test">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <button type="submit" class="btn btn-secondary">
+        <i class="fa-solid fa-paper-plane"></i> Отправить тестовое сообщение
+      </button>
+    </form>
+  </div>
+
+<%- include('./partials/end') %>

@@ -1,4 +1,5 @@
 const { startApp } = require('./app');
+const { initBot } = require('./telegram/bot');
 
 async function main() {
   const app = await startApp();
@@ -7,6 +8,8 @@ async function main() {
   app.listen(port, () => {
     console.log(`PhotoPrint service running on http://localhost:${port}`);
   });
+
+  initBot();
 }
 
 main().catch((error) => {

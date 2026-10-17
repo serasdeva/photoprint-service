@@ -143,6 +143,9 @@ app.use(async (req, res, next) => {
     : `${req.protocol}://${req.get('host')}${req.originalUrl}`;
   res.locals.ogImage = `${baseUrl || `${req.protocol}://${req.get('host')}`}/favicon.svg`;
 
+  const botUsername = String(process.env.BOT_USERNAME || '').replace(/^@/, '').trim();
+  res.locals.telegramUrl = botUsername ? `https://t.me/${botUsername}` : '';
+
   try {
     res.locals.settings = await getSettingsMap();
   } catch (error) {
