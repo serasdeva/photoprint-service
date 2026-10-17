@@ -1578,3 +1578,7 @@ html[data-theme='dark'] .public-site {
   color: var(--text-3);
   font-size: 0.9rem;
 }
+
+.services-toolbar .gallery-status {
+  white-space: nowrap;
+}

@@ -4,15 +4,26 @@ const { makeSlug } = require('../utils/slugify');
 const { safeDeleteUpload } = require('../utils/uploads');
 
 async function listPublicServices(req, res) {
-  const services = await Service.findAll({
+  const rawQ = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 120) : '';
+  const activeServices = await Service.findAll({
     where: { isActive: true },
     order: [['order', 'ASC']],
     raw: true,
   });
+  // SQLite LIKE is case-insensitive only for ASCII; filter in JS so Cyrillic search works.
+  const needle = rawQ.toLowerCase();
+  const services = needle
+    ? activeServices.filter((service) =>
+        [service.title, service.description]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(needle))
+      )
+    : activeServices;
 
   res.render('services', {
     title: 'Услуги',
     services,
+    filters: { q: rawQ },
     activePage: 'services',
   });
 }

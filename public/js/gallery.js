@@ -111,15 +111,39 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCounter();
   };
 
+  const getFocusable = () =>
+    lightbox
+      ? Array.from(
+          lightbox.querySelectorAll('button, [href], [tabindex]:not([tabindex="-1"])')
+        ).filter((el) => !el.hasAttribute('hidden') && el.getAttribute('aria-hidden') !== 'true')
+      : [];
+  const trapFocus = (e) => {
+    if (!lightbox?.classList.contains('open')) return;
+    if (e.key !== 'Tab') return;
+    const focusable = getFocusable();
+    if (!focusable.length) return;
+    const first = focusable[0],
+      last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
   const openLightbox = (item) => {
     if (!lightbox) return;
-    visibleItems = allItems.filter(matchesFilter);
+    visibleItems = allItems.filter((el) => !el.classList.contains('is-hidden'));
+    // fallback to all matched if pagination hides some
+    if (!visibleItems.includes(item)) visibleItems = allItems.filter(matchesFilter);
     currentIndex = Math.max(visibleItems.indexOf(item), 0);
     lastFocused = document.activeElement;
     lightbox.classList.add('open');
     document.body.style.overflow = 'hidden';
     renderSlide();
     closeButton?.focus();
+    document.addEventListener('keydown', trapFocus);
   };
 
   const closeLightbox = () => {
@@ -127,6 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
     lightbox.classList.remove('open');
     if (lightboxBody) lightboxBody.innerHTML = '';
     document.body.style.overflow = '';
+    document.removeEventListener('keydown', trapFocus);
     lastFocused?.focus?.();
   };
 

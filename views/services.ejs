@@ -15,12 +15,24 @@
 
   <section class="section service-list-section">
     <div class="container">
+      <form class="services-toolbar" method="GET" action="/services" role="search" aria-label="Поиск по услугам">
+        <label class="search-field" for="services-q">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <input id="services-q" name="q" type="search" placeholder="Поиск: например, паспорт, A4, копии" value="<%= (filters && filters.q) ? filters.q : '' %>" autocomplete="off" />
+        </label>
+        <button type="submit" class="btn btn-secondary">Найти</button>
+        <% if (filters && filters.q) { %>
+          <a href="/services" class="btn btn-ghost">Сбросить</a>
+        <% } %>
+        <span class="gallery-status" aria-live="polite">Найдено: <%= services.length %></span>
+      </form>
+
       <% if (!services.length) { %>
         <div class="card empty-state">
           <i class="fa-regular fa-folder-open"></i>
-          <h3>Услуги пока не добавлены</h3>
-          <p>Список услуг скоро появится — загляните позже.</p>
-          <a href="/" class="btn btn-secondary">На главную</a>
+          <h3>Ничего не нашли по запросу “<%= filters.q %>”</h3>
+          <p>Попробуйте изменить запрос или посмотрите все услуги.</p>
+          <a href="/services" class="btn btn-secondary">Показать все услуги</a>
         </div>
       <% } else { %>
         <div class="cards-grid">

@@ -33,12 +33,23 @@ function buildCategoryList(items) {
 }
 
 async function listPublicGallery(req, res) {
-  const items = await GalleryItem.findAll({ order: [['order', 'ASC']], raw: true });
+  const qRaw = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 120) : '';
+  const allItems = await GalleryItem.findAll({ order: [['order', 'ASC']], raw: true });
+  // SQLite LIKE is case-insensitive only for ASCII; filter in JS so Cyrillic search works.
+  const needle = qRaw.toLowerCase();
+  const items = needle
+    ? allItems.filter((item) =>
+        [item.title, item.category, item.description]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(needle))
+      )
+    : allItems;
 
   res.render('gallery', {
     title: 'Галерея',
     items,
-    categories: buildCategoryList(items),
+    categories: buildCategoryList(allItems),
+    filters: { q: qRaw },
     activePage: 'gallery',
   });
 }

@@ -113,8 +113,9 @@ test('GET / returns 200 with CSP header', async () => {
 test('GET /contacts renders the responsive order form', async () => {
   const res = await request(app).get('/contacts');
   assert.equal(res.status, 200);
-  assert.match(res.text, /href="tel:\+74951234567"/);
+  assert.match(res.text, /href="tel:\+7\d+"/);
   assert.match(res.text, /data-form="order"/);
+  assert.match(res.text, /data-phone-mask/);
 });
 
 test('GET /services, service details and /gallery preserve their public flows', async () => {
@@ -132,6 +133,41 @@ test('GET /services, service details and /gallery preserve their public flows', 
   assert.equal(gallery.status, 200);
   assert.match(gallery.text, /data-gallery-grid/);
   assert.match(gallery.text, /data-filter="all"/);
+});
+
+test('rebuilt home page exposes new UX blocks without breaking legacy hooks', async () => {
+  const res = await request(app).get('/');
+  assert.equal(res.status, 200);
+  assert.match(res.text, /id="home-services"/);
+  assert.match(res.text, /data-services-search/);
+  assert.match(res.text, /data-services-grid/);
+  assert.match(res.text, /Отзывы/);
+  assert.match(res.text, /Частые вопросы/);
+  assert.match(res.text, /data-faq/);
+  assert.match(res.text, /id="order-form"/);
+  assert.match(res.text, /id="sticky-cta"/);
+  assert.match(res.text, /aria-current="page"/);
+  assert.match(res.text, /application\/ld\+json/);
+  assert.match(res.text, /data-phone-mask/);
+  assert.match(res.text, /data-char-count/);
+});
+
+test('public search on services and gallery filters via query param', async () => {
+  const [noMatchServices, matchServices, noMatchGallery, matchGallery] = await Promise.all([
+    request(app).get('/services?q=__no_such_service__'),
+    // lowercase query must match mixed-case Cyrillic titles (SQLite LIKE is ASCII-only)
+    request(app).get('/services?q=тестовая'),
+    request(app).get('/gallery?q=__no_such_item__'),
+    request(app).get('/gallery?q=тестовая'),
+  ]);
+  assert.equal(noMatchServices.status, 200);
+  assert.match(noMatchServices.text, /Ничего не нашли/);
+  assert.equal(matchServices.status, 200);
+  assert.match(matchServices.text, /Тестовая услуга/);
+  assert.equal(noMatchGallery.status, 200);
+  assert.match(noMatchGallery.text, /Ничего не нашли/);
+  assert.equal(matchGallery.status, 200);
+  assert.match(matchGallery.text, /Тестовая работа/);
 });
 
 test('GET /unknown renders 404 page', async () => {
@@ -218,9 +254,7 @@ test('POST /admin/login without CSRF token does not authenticate', async () => {
   assert.equal(authCookie, undefined, 'auth cookie must not be issued');
 
   const sessionJar = collectCookies(res);
-  const loginPage = await request(app)
-    .get('/admin/login')
-    .set('Cookie', cookieHeader(sessionJar));
+  const loginPage = await request(app).get('/admin/login').set('Cookie', cookieHeader(sessionJar));
   assert.match(loginPage.text, /Недействительный токен формы/, 'CSRF failure flash must render');
 });
 

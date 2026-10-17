@@ -34,6 +34,9 @@ module.exports = [
         ...globals.browser,
       },
     },
+    rules: {
+      'no-empty': ['error', { allowEmptyCatch: true }],
+    },
   },
   {
     files: ['**/*.test.js', 'tests/**/*.js'],

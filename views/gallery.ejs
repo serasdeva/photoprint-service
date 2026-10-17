@@ -15,6 +15,17 @@
 
   <section class="section gallery-page-section">
     <div class="container">
+      <form class="services-toolbar" method="GET" action="/gallery" role="search" aria-label="Поиск по галерее">
+        <label class="search-field" for="gallery-q">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <input id="gallery-q" name="q" type="search" placeholder="Поиск: фото, печать, документы" value="<%= (typeof filters !== 'undefined' && filters && filters.q) ? filters.q : '' %>" autocomplete="off" />
+        </label>
+        <button type="submit" class="btn btn-secondary">Найти</button>
+        <% if (typeof filters !== 'undefined' && filters && filters.q) { %>
+          <a href="/gallery" class="btn btn-ghost">Сбросить</a>
+        <% } %>
+      </form>
+
       <div class="filter-bar" role="group" aria-label="Фильтр по категориям">
         <button class="filter-chip active" type="button" data-filter="all">Все</button>
         <% (categories || []).forEach((category) => { %>
@@ -25,9 +36,15 @@
       <% if (!items.length) { %>
         <div class="card empty-state">
           <i class="fa-regular fa-images"></i>
-          <h3>В галерее пока нет работ</h3>
-          <p>Мы загружаем примеры — загляните позже.</p>
-          <a href="/" class="btn btn-secondary">На главную</a>
+          <% if (typeof filters !== 'undefined' && filters && filters.q) { %>
+            <h3>Ничего не нашли по запросу “<%= filters.q %>”</h3>
+            <p>Попробуйте другой запрос или посмотрите всю галерею.</p>
+            <a href="/gallery" class="btn btn-secondary">Показать всё</a>
+          <% } else { %>
+            <h3>В галерее пока нет работ</h3>
+            <p>Мы загружаем примеры — загляните позже.</p>
+            <a href="/" class="btn btn-secondary">На главную</a>
+          <% } %>
         </div>
       <% } else { %>
         <div class="gallery-grid" data-gallery-grid>
@@ -41,6 +58,8 @@
               data-poster="<%= item.thumbnail || '' %>"
               data-title="<%= item.title %>"
               tabindex="0"
+              role="button"
+              aria-label="Открыть <%= item.title %>"
             >
               <% if (item.type === 'video') { %>
                 <video src="<%= item.url %>" muted playsinline preload="metadata"<% if (item.thumbnail) { %> poster="<%= item.thumbnail %>"<% } %>></video>

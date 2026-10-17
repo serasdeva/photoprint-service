@@ -54,22 +54,24 @@
       <div class="card reveal service-order-card">
         <h3>Оставить заявку</h3>
         <p class="text-muted service-order-copy">Заполните форму — свяжемся с вами и уточним детали заказа.</p>
-        <form data-form="order">
+        <form data-form="order" novalidate>
           <div class="hp-field" aria-hidden="true">
             <input type="text" name="website" tabindex="-1" autocomplete="off" value="" />
           </div>
           <div class="form-grid">
             <div>
               <label for="single-name">Имя <span class="req">*</span></label>
-              <input id="single-name" name="name" required placeholder="Ваше имя" />
+              <input id="single-name" name="name" required placeholder="Ваше имя" autocomplete="name" aria-describedby="single-name-error" />
+              <span class="field-error" id="single-name-error" aria-live="polite"></span>
             </div>
             <div>
               <label for="single-phone">Телефон <span class="req">*</span></label>
-              <input id="single-phone" name="phone" required placeholder="+7 (___) ___-__-__" />
+              <input id="single-phone" name="phone" required placeholder="+7 (___) ___-__-__" inputmode="tel" autocomplete="tel" aria-describedby="single-phone-error" data-phone-mask />
+              <span class="field-error" id="single-phone-error" aria-live="polite"></span>
             </div>
             <div>
               <label for="single-email">Email</label>
-              <input id="single-email" name="email" type="email" placeholder="name@example.com" />
+              <input id="single-email" name="email" type="email" placeholder="name@example.com" autocomplete="email" />
             </div>
             <div>
               <label for="order-service">Услуга</label>
@@ -77,7 +79,8 @@
             </div>
             <div>
               <label for="single-message">Комментарий</label>
-              <textarea id="single-message" name="message" placeholder="Количество, формат, пожелания"></textarea>
+              <textarea id="single-message" name="message" placeholder="Количество, формат, пожелания" maxlength="3000"></textarea>
+              <small class="form-hint"><span data-char-count>0</span>/3000</small>
             </div>
             <button type="submit" class="btn btn-primary btn-block">Отправить заявку</button>
             <p class="form-hint">

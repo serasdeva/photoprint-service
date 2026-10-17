@@ -41,7 +41,7 @@ function invalidateSettingsCache() {
 
 async function renderHome(req, res) {
   const [services, gallery, settings] = await Promise.all([
-    Service.findAll({ where: { isActive: true }, order: [['order', 'ASC']], limit: 3, raw: true }),
+    Service.findAll({ where: { isActive: true }, order: [['order', 'ASC']], limit: 6, raw: true }),
     GalleryItem.findAll({ order: [['order', 'ASC']], limit: 6, raw: true }),
     getSettingsMap(),
   ]);
