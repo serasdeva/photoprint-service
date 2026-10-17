@@ -454,7 +454,9 @@ async function renderTelegramPage(req, res) {
 async function saveTelegramSettings(req, res) {
   try {
     const adminChatId = String(req.body.telegramAdminChatId || '').trim();
-    const welcome = String(req.body.telegramWelcome || '').trim().slice(0, 4000);
+    const welcome = String(req.body.telegramWelcome || '')
+      .trim()
+      .slice(0, 4000);
     const notifyOrders = req.body.telegramNotifyOrders ? 'true' : 'false';
 
     await upsertSetting('telegramAdminChatId', adminChatId);
@@ -477,7 +479,10 @@ async function sendTelegramTest(req, res) {
 
   try {
     if (!getBot()) {
-      req.flash('error', 'Бот не запущен. Укажите BOT_TOKEN и BOT_ENABLED=true, затем перезапустите сервер.');
+      req.flash(
+        'error',
+        'Бот не запущен. Укажите BOT_TOKEN и BOT_ENABLED=true, затем перезапустите сервер.'
+      );
       return res.redirect('/admin/settings/telegram');
     }
 
@@ -491,7 +496,10 @@ async function sendTelegramTest(req, res) {
       adminChatId,
       '✅ Тестовое сообщение от PhotoPrint Service. Уведомления настроены.'
     );
-    req.flash(delivered ? 'success' : 'error', delivered ? 'Тестовое сообщение отправлено' : 'Не удалось отправить сообщение');
+    req.flash(
+      delivered ? 'success' : 'error',
+      delivered ? 'Тестовое сообщение отправлено' : 'Не удалось отправить сообщение'
+    );
   } catch (error) {
     console.error('Telegram test failed:', error);
     req.flash('error', 'Не удалось отправить тестовое сообщение');
