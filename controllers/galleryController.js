@@ -64,20 +64,41 @@ function pickUpload(req, field) {
   return Array.isArray(files) && files.length ? files[0] : null;
 }
 
+function resolveGalleryType(requestedType, mediaFile) {
+  if (mediaFile && mediaFile.mimetype === 'video/mp4') return 'video';
+  if (mediaFile && String(mediaFile.mimetype).startsWith('image/')) return 'image';
+  const normalized = String(requestedType || '').trim();
+  if (normalized === 'video' || normalized === 'image') return normalized;
+  return 'image';
+}
+
 async function createGalleryItem(req, _res) {
   const { title, category, description, order, type } = req.body;
   const mediaFile = pickUpload(req, 'media');
   const posterFile = pickUpload(req, 'poster');
+  const resolvedType = resolveGalleryType(type, mediaFile);
+
+  if (!mediaFile || !mediaFile.filename) {
+    const error = new Error('Файл галереи обязателен');
+    error.status = 400;
+    throw error;
+  }
 
   return GalleryItem.create({
     title,
     category: category || 'general',
     description: description || '',
-    type: type || 'image',
-    url: mediaFile ? `/uploads/gallery/${mediaFile.filename}` : '',
+    type: resolvedType,
+    url: `/uploads/gallery/${mediaFile.filename}`,
     thumbnail: posterFile ? `/uploads/gallery/${posterFile.filename}` : null,
     order: Number(order || 0),
   });
 }
 
-module.exports = { listPublicGallery, getGalleryApi, createGalleryItem, pickUpload };
+module.exports = {
+  listPublicGallery,
+  getGalleryApi,
+  createGalleryItem,
+  pickUpload,
+  resolveGalleryType,
+};

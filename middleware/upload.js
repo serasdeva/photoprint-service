@@ -72,7 +72,7 @@ function fileFilter(req, file, cb) {
 
 const uploadServiceImage = multer({
   storage: serviceStorage,
-  fileFilter,
+  fileFilter: imageFileFilter,
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 

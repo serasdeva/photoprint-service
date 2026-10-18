@@ -233,23 +233,32 @@ async function saveGallery(req, res) {
       const { title, category, description, order, type, removeFile, removePoster } = req.body;
       const mediaFile = pickUpload(req, 'media');
       const posterFile = pickUpload(req, 'poster');
+      const wantsRemoveFile = removeFile === '1' || removeFile === 'on';
+      const wantsRemovePoster = removePoster === '1' || removePoster === 'on';
+
+      // Нельзя оставить запись галереи без файла: url обязателен (notEmpty).
+      if (wantsRemoveFile && !mediaFile) {
+        const error = new Error('Нельзя удалить файл без загрузки нового');
+        error.status = 400;
+        throw error;
+      }
+
       const updateData = {
         title,
         category: category || 'general',
         description: description || '',
         order: Number(order || 0),
-        type: type || item.type,
+        type: mediaFile
+          ? mediaFile.mimetype === 'video/mp4'
+            ? 'video'
+            : 'image'
+          : type || item.type,
       };
       let mediaCleared = false;
 
       if (mediaFile) {
         if (item.url) safeDeleteUpload(item.url);
         updateData.url = `/uploads/gallery/${mediaFile.filename}`;
-        updateData.thumbnail = null;
-        mediaCleared = true;
-      } else if (removeFile === '1' || removeFile === 'on') {
-        if (item.url) safeDeleteUpload(item.url);
-        updateData.url = '';
         updateData.thumbnail = null;
         mediaCleared = true;
       }
@@ -260,7 +269,7 @@ async function saveGallery(req, res) {
           safeDeleteUpload(item.thumbnail);
         }
         updateData.thumbnail = posterUrl;
-      } else if (removePoster === '1' || removePoster === 'on') {
+      } else if (wantsRemovePoster) {
         if (item.thumbnail) safeDeleteUpload(item.thumbnail);
         updateData.thumbnail = null;
       } else if (mediaCleared && item.thumbnail) {
@@ -278,10 +287,11 @@ async function saveGallery(req, res) {
   } catch (error) {
     console.error('Admin gallery save failed:', error);
     saveAdminFormDraft(req, 'gallery', id);
-    req.flash(
-      'error',
-      'Не удалось сохранить элемент галереи. Проверьте данные и попробуйте снова.'
-    );
+    const message =
+      error.status === 400 && error.message
+        ? error.message
+        : 'Не удалось сохранить элемент галереи. Проверьте данные и попробуйте снова.';
+    req.flash('error', message);
     return res.redirect(id ? `/admin/gallery/${id}/edit` : '/admin/gallery/new');
   }
 }
