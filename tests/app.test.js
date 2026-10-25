@@ -38,7 +38,14 @@ function cookieHeader(jar) {
     .join('; ');
 }
 
+let sharedJar = null;
+
 async function loginJar() {
+  // Один вход на весь файл: иначе срабатывает rate limit логина (5 попыток на IP).
+  if (sharedJar) {
+    return sharedJar;
+  }
+
   const jar = { csrf_token: csrfToken };
   const login = await request(app)
     .post('/admin/login')
@@ -48,6 +55,7 @@ async function loginJar() {
     .send({ username: 'admin-test', password: 'Test1234!', _csrf: csrfToken });
   collectCookies(login, jar);
   assert.ok(jar.auth_token, 'auth cookie must be issued');
+  sharedJar = jar;
   return jar;
 }
 
@@ -452,4 +460,81 @@ test('admin form validation rejects invalid service payload', async () => {
   assert.equal(galleryForm.status, 200);
   assert.match(galleryForm.text, new RegExp(`id="g-title" name="title" value="${galleryTitle}"`));
   assert.match(galleryForm.text, /id="g-category" name="category"[^>]*value="family photos"/);
+});
+
+test('inactive services are hidden from the public site and sitemap', async () => {
+  const hidden = await Service.create({
+    title: 'Черновик услуги',
+    slug: 'hidden-draft-service',
+    description: 'Ещё не опубликовано',
+    price: 1,
+    priceUnit: 'шт',
+    icon: 'fa-print',
+    order: 99,
+    isActive: false,
+  });
+
+  try {
+    const page = await request(app).get('/services/hidden-draft-service');
+    assert.equal(page.status, 404, 'inactive service must not be reachable by direct URL');
+
+    const sitemap = await request(app).get('/sitemap.xml');
+    assert.doesNotMatch(sitemap.text, /hidden-draft-service/);
+    assert.match(sitemap.text, /\/services\/test-service/);
+  } finally {
+    await hidden.destroy();
+  }
+});
+
+test('admin catalog search matches Cyrillic regardless of case', async () => {
+  const jar = await loginJar();
+
+  const servicesPage = await request(app)
+    .get('/admin/services?q=тестовая')
+    .set('Cookie', cookieHeader(jar));
+  assert.equal(servicesPage.status, 200);
+  assert.match(
+    servicesPage.text,
+    /Тестовая услуга/,
+    'lowercase Cyrillic query must find the title'
+  );
+
+  const galleryPage = await request(app)
+    .get('/admin/gallery?q=тестовая')
+    .set('Cookie', cookieHeader(jar));
+  assert.equal(galleryPage.status, 200);
+  assert.match(galleryPage.text, /Тестовая работа/);
+});
+
+test('admin order search matches Cyrillic regardless of case', async () => {
+  const order = await Order.create({
+    name: 'Мария Петрова',
+    phone: '+7 900 222-33-44',
+    service: 'Фотопечать',
+    message: 'Проверка поиска',
+  });
+  const jar = await loginJar();
+
+  try {
+    const res = await request(app).get('/admin/orders?q=мария').set('Cookie', cookieHeader(jar));
+    assert.equal(res.status, 200);
+    assert.match(res.text, /Мария Петрова/);
+  } finally {
+    await order.destroy();
+  }
+});
+
+test('search URLs keep a clean canonical and are marked noindex', async () => {
+  const res = await request(app).get('/services?q=тест');
+  assert.equal(res.status, 200);
+  assert.match(res.text, /rel="canonical" href="http:\/\/localhost:3000\/services"/);
+  assert.doesNotMatch(res.text, /rel="canonical" href="[^"]*\?/);
+  assert.match(res.text, /<meta name="robots" content="noindex, follow" \/>/);
+});
+
+test('robots.txt keeps admin and api out of the index', async () => {
+  const res = await request(app).get('/robots.txt');
+  assert.equal(res.status, 200);
+  assert.match(res.text, /Disallow: \/admin/);
+  assert.match(res.text, /Disallow: \/api/);
 });

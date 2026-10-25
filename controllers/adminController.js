@@ -1,5 +1,5 @@
-const { Op } = require('sequelize');
 const { Service, GalleryItem, Order, Setting } = require('../models');
+const { filterByTerm, paginate } = require('../utils/search');
 const { createService, updateService } = require('./serviceController');
 const { createGalleryItem, pickUpload } = require('./galleryController');
 const { getSettingsMap, invalidateSettingsCache } = require('./homeController');
@@ -42,33 +42,16 @@ async function renderDashboard(req, res) {
 
 async function renderServicesPage(req, res) {
   const term = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 120) : '';
-  const where = term
-    ? {
-        [Op.or]: [
-          { title: { [Op.like]: `%${term}%` } },
-          { slug: { [Op.like]: `%${term}%` } },
-          { description: { [Op.like]: `%${term}%` } },
-        ],
-      }
-    : {};
-  const limit = 20;
-  const total = await Service.count({ where });
-  const totalPages = Math.max(1, Math.ceil(total / limit));
-  const requestedPage = Number.parseInt(req.query.page, 10) || 1;
-  const page = Math.min(Math.max(1, requestedPage), totalPages);
-  const services = await Service.findAll({
-    where,
-    order: [['order', 'ASC']],
-    limit,
-    offset: (page - 1) * limit,
-    raw: true,
-  });
+  // Каталог небольшой, поэтому фильтруем в JS: SQLite LIKE не учитывает регистр кириллицы.
+  const rows = await Service.findAll({ order: [['order', 'ASC']], raw: true });
+  const matched = filterByTerm(rows, term, ['title', 'slug', 'description']);
+  const { items, pagination } = paginate(matched, req.query.page, 20);
 
   res.render('admin/services', {
     title: 'Услуги',
-    services,
+    services: items,
     filters: { q: term },
-    pagination: { page, totalPages, total },
+    pagination,
     activePage: 'services',
   });
 }
@@ -153,33 +136,16 @@ async function deleteService(req, res) {
 
 async function renderGalleryPage(req, res) {
   const term = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 120) : '';
-  const where = term
-    ? {
-        [Op.or]: [
-          { title: { [Op.like]: `%${term}%` } },
-          { category: { [Op.like]: `%${term}%` } },
-          { description: { [Op.like]: `%${term}%` } },
-        ],
-      }
-    : {};
-  const limit = 20;
-  const total = await GalleryItem.count({ where });
-  const totalPages = Math.max(1, Math.ceil(total / limit));
-  const requestedPage = Number.parseInt(req.query.page, 10) || 1;
-  const page = Math.min(Math.max(1, requestedPage), totalPages);
-  const items = await GalleryItem.findAll({
-    where,
-    order: [['order', 'ASC']],
-    limit,
-    offset: (page - 1) * limit,
-    raw: true,
-  });
+  // См. комментарий в renderServicesPage: поиск по кириллице выполняется в JS.
+  const rows = await GalleryItem.findAll({ order: [['order', 'ASC']], raw: true });
+  const matched = filterByTerm(rows, term, ['title', 'category', 'description']);
+  const { items, pagination } = paginate(matched, req.query.page, 20);
 
   res.render('admin/gallery', {
     title: 'Галерея',
     items,
     filters: { q: term },
-    pagination: { page, totalPages, total },
+    pagination,
     activePage: 'gallery',
   });
 }
@@ -325,36 +291,17 @@ async function renderOrdersPage(req, res) {
     where.status = status;
   }
 
-  const term = (q || '').trim();
-  if (term) {
-    const like = `%${term}%`;
-    where[Op.or] = [
-      { name: { [Op.like]: like } },
-      { phone: { [Op.like]: like } },
-      { email: { [Op.like]: like } },
-      { service: { [Op.like]: like } },
-    ];
-  }
-
-  const limit = 20;
-  const total = await Order.count({ where });
-  const totalPages = Math.max(1, Math.ceil(total / limit));
-  const requestedPage = Number.parseInt(req.query.page, 10) || 1;
-  const page = Math.min(Math.max(1, requestedPage), totalPages);
-
-  const orders = await Order.findAll({
-    where,
-    order: [['createdAt', 'DESC']],
-    limit,
-    offset: (page - 1) * limit,
-    raw: true,
-  });
+  const term = typeof q === 'string' ? q.trim() : '';
+  // Поиск по имени/телефону/услуге фильтруем в JS: SQLite LIKE регистрозависим для кириллицы.
+  const rows = await Order.findAll({ where, order: [['createdAt', 'DESC']], raw: true });
+  const matched = filterByTerm(rows, term, ['name', 'phone', 'email', 'service']);
+  const { items, pagination } = paginate(matched, req.query.page, 20);
 
   res.render('admin/orders', {
     title: 'Заявки',
-    orders,
+    orders: items,
     filters: { status: status || '', q: term },
-    pagination: { page, totalPages, total },
+    pagination,
     activePage: 'orders',
   });
 }

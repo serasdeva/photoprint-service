@@ -138,10 +138,11 @@ app.use(async (req, res, next) => {
   res.locals.currentYear = new Date().getFullYear();
 
   const baseUrl = (process.env.BASE_URL || '').replace(/\/+$/, '');
-  res.locals.canonicalUrl = baseUrl
-    ? `${baseUrl}${req.originalUrl}`
-    : `${req.protocol}://${req.get('host')}${req.originalUrl}`;
-  res.locals.ogImage = `${baseUrl || `${req.protocol}://${req.get('host')}`}/favicon.svg`;
+  const origin = baseUrl || `${req.protocol}://${req.get('host')}`;
+  // canonical без query: страницы поиска (`?q=`) не должны индексироваться как отдельные URL.
+  res.locals.canonicalUrl = `${origin}${req.path}`;
+  res.locals.noindex = typeof req.query.q === 'string' && req.query.q.trim() !== '';
+  res.locals.ogImage = `${origin}/favicon.svg`;
 
   const botUsername = String(process.env.BOT_USERNAME || '')
     .replace(/^@/, '')
@@ -174,14 +175,18 @@ app.use('/api', apiRouter);
 
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
-  res.send('User-agent: *\nAllow: /\n');
+  res.send('User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api\n');
 });
 
 app.get(
   '/sitemap.xml',
   asyncHandler(async (req, res) => {
     const base = (process.env.BASE_URL || 'http://localhost:3000').replace(/\/+$/, '');
-    const services = await Service.findAll({ attributes: ['slug'], raw: true });
+    const services = await Service.findAll({
+      where: { isActive: true },
+      attributes: ['slug'],
+      raw: true,
+    });
     const paths = ['/', '/services', '/gallery', '/contacts', '/privacy'].concat(
       services.map((service) => `/services/${service.slug}`)
     );
@@ -206,7 +211,11 @@ app.use((err, req, res, next) => {
   if (res.headersSent) {
     return next(err);
   }
-  res.status(500).render('500', { title: 'Ошибка сервера', error: err.message });
+  res.status(500).render('500', {
+    title: 'Ошибка сервера',
+    // В продакшене не отдаём текст ошибки наружу: в нём бывают пути и детали SQL.
+    error: process.env.NODE_ENV === 'production' ? null : err.message,
+  });
 });
 
 async function startApp() {

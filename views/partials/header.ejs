@@ -13,6 +13,9 @@
     <meta name="description" content="<%= typeof description !== 'undefined' && description ? description : 'Печать фотографий, копирование документов, оформление документов и набор текста — быстро и по доступной цене.' %>" />
     <meta name="theme-color" content="#c45136" />
     <link rel="canonical" href="<%= canonicalUrl %>" />
+    <% if (typeof noindex !== 'undefined' && noindex) { %>
+      <meta name="robots" content="noindex, follow" />
+    <% } %>
     <meta property="og:type" content="website" />
     <meta property="og:url" content="<%= canonicalUrl %>" />
     <meta property="og:image" content="<%= ogImage %>" />

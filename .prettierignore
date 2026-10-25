@@ -4,3 +4,5 @@ public/uploads
 package-lock.json
 *.ejs
 *.svg
+
+.zwork

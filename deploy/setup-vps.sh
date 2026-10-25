@@ -137,7 +137,8 @@ cat > /etc/nginx/sites-available/photoprint <<EOF
 server {
     listen 80;
     server_name $DOMAIN;
-    client_max_body_size 20M;
+    # multer принимает до 25 МБ на файл (медиа + постер), поэтому лимит nginx выше.
+    client_max_body_size 55M;
 
     location / {
         proxy_pass http://127.0.0.1:3000;

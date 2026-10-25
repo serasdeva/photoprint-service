@@ -17,7 +17,10 @@ class FileSessionStore extends session.Store {
   }
 
   _file(sid) {
-    const safe = String(sid).replace(/[^a-zA-Z0-9_-]/g, (ch) => `_${ch.charCodeAt(0).toString(16)}`);
+    const safe = String(sid).replace(
+      /[^a-zA-Z0-9_-]/g,
+      (ch) => `_${ch.charCodeAt(0).toString(16)}`
+    );
     return path.join(this.dir, `${safe}.json`);
   }
 

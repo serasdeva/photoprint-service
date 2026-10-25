@@ -30,7 +30,8 @@ async function listPublicServices(req, res) {
 
 async function showSingleService(req, res) {
   const { slug } = req.params;
-  const service = await Service.findOne({ where: { slug } });
+  // Черновики (isActive: false) не должны открываться по прямому URL.
+  const service = await Service.findOne({ where: { slug, isActive: true } });
 
   if (!service) {
     return res.status(404).render('404', { title: 'Услуга не найдена' });

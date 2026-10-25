@@ -11,7 +11,9 @@ server {
     ssl_certificate /etc/letsencrypt/live/your-domain.ru/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/your-domain.ru/privkey.pem;
 
-    client_max_body_size 20M;
+    # multer принимает до 25 МБ на файл (медиа + постер), поэтому лимит nginx выше:
+    # иначе видео 20–25 МБ отваливается 413-й HTML-страницей вместо сообщения в форме.
+    client_max_body_size 55M;
 
     location / {
         proxy_pass http://127.0.0.1:3000;
