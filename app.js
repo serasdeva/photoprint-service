@@ -149,7 +149,7 @@ app.use(async (req, res, next) => {
   // canonical без query: страницы поиска (`?q=`) не должны индексироваться как отдельные URL.
   res.locals.canonicalUrl = `${origin}${req.path}`;
   res.locals.noindex = typeof req.query.q === 'string' && req.query.q.trim() !== '';
-  res.locals.ogImage = `${origin}/favicon.svg`;
+  res.locals.ogImage = `${origin}/og-image.png`;
 
   const botUsername = String(process.env.BOT_USERNAME || '')
     .replace(/^@/, '')

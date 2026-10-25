@@ -234,15 +234,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ---------- Phone mask + inline validation + char count ---------- */
   function formatPhone(value) {
-    const digits = value.replace(/\D/g, '').slice(0, 11);
+    const digits = String(value).replace(/\D/g, '').slice(0, 11);
+    // 8XXXXXXXXXX и +7XXXXXXXXXX — один и тот же номер: отбрасываем код страны.
+    // Иначе 10 цифр без префикса превращались в «+7 (005) 553-53-5».
+    let national = digits;
+    if (national.startsWith('8')) {
+      national = national.slice(1);
+    } else if (national.length === 11 && national.startsWith('7')) {
+      national = national.slice(1);
+    }
+    national = national.slice(0, 10);
+
     if (!digits) return '';
-    let out = '+7';
-    if (digits.length > 1) out += ' (' + digits.slice(1, 4);
-    if (digits.length >= 5) out += ') ' + digits.slice(4, 7);
-    if (digits.length >= 8) out += '-' + digits.slice(7, 9);
-    if (digits.length >= 10) out += '-' + digits.slice(9, 11);
-    if (digits.length <= 1) return '+7';
-    // handle paste of +7... normalize
+    if (!national) return '+7';
+
+    let out = '+7 (' + national.slice(0, 3);
+    if (national.length >= 4) out += ') ' + national.slice(3, 6);
+    if (national.length >= 7) out += '-' + national.slice(6, 8);
+    if (national.length >= 9) out += '-' + national.slice(8, 10);
     return out;
   }
   document.querySelectorAll('[data-phone-mask]').forEach((input) => {

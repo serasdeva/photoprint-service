@@ -47,7 +47,7 @@ USED_IN_APP = {
         "layer-group", "link", "list-check", "location-dot", "magnifying-glass",
         "map-location-dot", "moon", "paper-plane", "pen", "phone", "play",
         "plus", "print", "right-from-bracket", "right-to-bracket",
-        "ruble-sign", "shield-halved", "shield-heart", "sliders", "sparkles",
+        "ruble-sign", "shield-halved", "shield-heart", "sliders",
         "spinner", "star", "sun", "video", "xmark",
     ],
     "regular": [
@@ -74,8 +74,8 @@ EXTRAS = {
         "id-card", "italic", "language", "laptop", "leaf", "list", "list-ul",
         "lock", "magnifying-glass-minus", "magnifying-glass-plus", "medal",
         "message", "microchip", "microphone", "mobile-screen", "money-bill",
-        "monitor", "mug-hot", "paintbrush", "palette", "passport", "pen-nib",
-        "pencil", "phone-flip", "phone-volume", "plane", "plus", "printer",
+        "mug-hot", "paintbrush", "palette", "passport", "pen-nib",
+        "pencil", "phone-flip", "phone-volume", "plane", "plus",
         "qrcode", "receipt", "robot", "rotate", "seedling", "server",
         "shield", "shop", "snowflake", "square-check", "stamp", "star-half",
         "store", "table", "table-columns", "tag", "tags", "terminal",
@@ -114,16 +114,32 @@ BASE_CSS = """/*!
 
 
 def parse_css(css_path: Path) -> dict:
-    """Имя иконки -> кодовая точка. FA пишет content и как эскейп ("\\f02f"),
-    и как литеральный PUA-символ — обрабатываем оба варианта."""
+    """Имя иконки -> кодовая точка.
+
+    В FA часть правил объединяет алиасы в одном селекторе:
+    `.fa-file-alt:before,.fa-file-lines:before{content:"\\f15c"}`. Поэтому имя
+    нельзя искать только перед `{` — разбираем правило целиком. Заодно
+    обрабатываем оба варианта content: эскейп и литеральный PUA-символ.
+    """
     text = css_path.read_text(encoding="utf-8")
     mapping = {}
-    for name, raw in re.findall(r'\.fa-([a-z0-9-]+):before\{content:"([^"]*)"\}', text):
+
+    for selector, body in re.findall(r"([^{}]+)\{([^{}]*)\}", text):
+        content = re.search(r'content:\s*"([^"]*)"', body)
+        if not content:
+            continue
+
+        raw = content.group(1)
         if raw.startswith("\\"):
             code = raw[1:]
-        else:
+        elif raw:
             code = format(ord(raw[0]), "x")
-        mapping.setdefault(name, code.lower())
+        else:
+            continue
+
+        for name in re.findall(r"\.fa-([a-z0-9-]+):before", selector):
+            mapping.setdefault(name, code.lower())
+
     return mapping
 
 

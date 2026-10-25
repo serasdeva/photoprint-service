@@ -542,6 +542,21 @@ test('robots.txt keeps admin and api out of the index', async () => {
   assert.match(res.text, /Disallow: \/api/);
 });
 
+test('social preview tags point to a committed 1200x630 raster image', async () => {
+  const res = await request(app).get('/');
+  assert.equal(res.status, 200);
+  assert.match(res.text, /property="og:image" content="http:\/\/localhost:3000\/og-image\.png"/);
+  assert.match(res.text, /property="og:image:width" content="1200"/);
+  assert.match(res.text, /property="og:image:height" content="630"/);
+  assert.match(res.text, /name="twitter:card" content="summary_large_image"/);
+  assert.match(res.text, /name="twitter:image" content="http:\/\/localhost:3000\/og-image\.png"/);
+  assert.doesNotMatch(res.text, /property="og:image" content="[^"]*\.svg"/);
+
+  const asset = path.join(__dirname, '..', 'public', 'og-image.png');
+  assert.ok(fs.existsSync(asset), 'public/og-image.png must be committed');
+  assert.ok(fs.statSync(asset).size > 20 * 1024, 'og-image must not be a placeholder');
+});
+
 test('GET /healthz reports database availability', async () => {
   const res = await request(app).get('/healthz');
   assert.equal(res.status, 200);
