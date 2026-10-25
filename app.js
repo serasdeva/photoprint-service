@@ -11,7 +11,8 @@ const FileSessionStore = require('./utils/fileSessionStore');
 const flash = require('connect-flash');
 const rateLimit = require('express-rate-limit');
 
-const { syncDatabase } = require('./config/db');
+const { sequelize, syncDatabase } = require('./config/db');
+const { runMigrations } = require('./config/migrations');
 const { getSettingsMap } = require('./controllers/homeController');
 const { ensureCsrfCookie, verifyCsrf } = require('./middleware/csrf');
 const asyncHandler = require('./utils/asyncHandler');
@@ -69,20 +70,26 @@ app.use(
 if (allowedOrigins.length) {
   app.use(cors({ origin: allowedOrigins, credentials: false }));
 }
-app.use(morgan('dev'));
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
+const sessionStore = new FileSessionStore({
+  // SESSION_DIR позволяет тестам и нестандартным деплоям держать сессии вне каталога проекта.
+  path: process.env.SESSION_DIR || path.join(__dirname, 'data', 'sessions'),
+  ttl: 7 * 24 * 60 * 60,
+  logFn: (error) => console.error('Session store error:', error.message),
+});
+// Просроченные файлы сессий иначе остаются на диске навсегда: удаляем их при старте и раз в 6 часов.
+sessionStore.prune();
+setInterval(() => sessionStore.prune(), 6 * 60 * 60 * 1000).unref();
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    store: new FileSessionStore({
-      path: path.join(__dirname, 'data', 'sessions'),
-      ttl: 7 * 24 * 60 * 60,
-      logFn: (error) => console.error('Session store error:', error.message),
-    }),
+    store: sessionStore,
     cookie: {
       httpOnly: true,
       sameSite: 'lax',
@@ -159,6 +166,18 @@ app.use(async (req, res, next) => {
   next();
 });
 
+app.get('/healthz', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+
+  try {
+    await sequelize.query('SELECT 1');
+    return res.json({ status: 'ok', db: 'ok', uptime: Math.round(process.uptime()) });
+  } catch (error) {
+    console.error('Health check failed:', error.message);
+    return res.status(503).json({ status: 'error', db: 'unavailable' });
+  }
+});
+
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 60,
@@ -220,6 +239,7 @@ app.use((err, req, res, next) => {
 
 async function startApp() {
   await syncDatabase();
+  await runMigrations({ sequelize, queryInterface: sequelize.getQueryInterface() });
   return app;
 }
 

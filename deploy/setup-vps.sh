@@ -140,6 +140,23 @@ server {
     # multer принимает до 25 МБ на файл (медиа + постер), поэтому лимит nginx выше.
     client_max_body_size 55M;
 
+    gzip on;
+    gzip_comp_level 5;
+    gzip_min_length 1024;
+    gzip_proxied any;
+    gzip_vary on;
+    gzip_types text/plain text/css application/javascript application/json application/xml image/svg+xml;
+
+    location ~* \.(css|js|svg|woff2)\$ {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        expires 1h;
+    }
+
     location / {
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
@@ -165,7 +182,7 @@ systemctl reload nginx
 
 printf 'Checking application on localhost...\n'
 for attempt in {1..10}; do
-  if curl --fail --silent --show-error --max-time 5 -o /dev/null -H "Host: $DOMAIN" http://127.0.0.1:3000/; then
+  if curl --fail --silent --show-error --max-time 5 -o /dev/null -H "Host: $DOMAIN" http://127.0.0.1:3000/healthz; then
     break
   fi
   if [[ "$attempt" -eq 10 ]]; then

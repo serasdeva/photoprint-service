@@ -47,6 +47,38 @@ class FileSessionStore {
       }
     }
   }
+
+  /** Удаляет брошенные диалоги: состояние заказа не должно жить в файлах месяцами. */
+  prune(maxAgeMs = 7 * 24 * 60 * 60 * 1000) {
+    let entries;
+    try {
+      entries = fs.readdirSync(this.dir);
+    } catch (error) {
+      console.error('Telegram session prune failed:', error.message);
+      return 0;
+    }
+
+    let removed = 0;
+    for (const entry of entries) {
+      if (!entry.endsWith('.json')) {
+        continue;
+      }
+
+      const file = path.join(this.dir, entry);
+      try {
+        if (Date.now() - fs.statSync(file).mtimeMs > maxAgeMs) {
+          fs.unlinkSync(file);
+          removed += 1;
+        }
+      } catch (error) {
+        if (error.code !== 'ENOENT') {
+          console.error('Telegram session prune failed:', error.message);
+        }
+      }
+    }
+
+    return removed;
+  }
 }
 
 module.exports = FileSessionStore;

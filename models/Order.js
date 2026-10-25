@@ -55,6 +55,13 @@ const Order = sequelize.define(
   {
     timestamps: true,
     tableName: 'Orders',
+    // Дублируются миграцией 0001: sync() нужен для свежих баз и development,
+    // миграция — для уже существующих баз в продакшене.
+    indexes: [
+      { name: 'orders_status_idx', fields: ['status'] },
+      { name: 'orders_created_at_idx', fields: ['createdAt'] },
+      { name: 'orders_telegram_chat_id_idx', fields: ['telegramChatId'] },
+    ],
   }
 );
 

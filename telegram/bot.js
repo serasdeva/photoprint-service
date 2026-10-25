@@ -5,17 +5,6 @@ const FileSessionStore = require('./sessionStore');
 const { registerHandlers } = require('./handlers');
 
 let bot = null;
-let stopping = false;
-
-function stoppedUpdates() {
-  if (stopping) {
-    return;
-  }
-  stopping = true;
-  if (bot) {
-    bot.stop('shutdown');
-  }
-}
 
 function initBot() {
   if (!isBotEnabled()) {
@@ -27,8 +16,12 @@ function initBot() {
     return bot;
   }
 
+  const sessionStore = new FileSessionStore({ path: getSessionsDir() });
+  sessionStore.prune();
+  setInterval(() => sessionStore.prune(), 24 * 60 * 60 * 1000).unref();
+
   bot = new Telegraf(getToken());
-  bot.use(session({ store: new FileSessionStore({ path: getSessionsDir() }) }));
+  bot.use(session({ store: sessionStore }));
   registerHandlers(bot);
   setBot(bot);
 
@@ -45,9 +38,6 @@ function initBot() {
       console.log('[telegram] Bot stopped.');
     });
 
-  process.once('SIGINT', stoppedUpdates);
-  process.once('SIGTERM', stoppedUpdates);
-
   console.log('[telegram] Bot started (long polling).');
   return bot;
 }
@@ -56,7 +46,6 @@ async function stopBot() {
   if (!bot) {
     return;
   }
-  stopping = true;
   try {
     await bot.stop('stop');
   } catch (error) {

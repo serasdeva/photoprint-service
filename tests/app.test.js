@@ -10,6 +10,7 @@ const path = require('path');
 
 const dbFile = path.join(os.tmpdir(), `photoprint-test-${process.pid}.sqlite`);
 process.env.DB_STORAGE = dbFile;
+process.env.SESSION_DIR = path.join(os.tmpdir(), `photoprint-test-sessions-${process.pid}`);
 fs.rmSync(dbFile, { force: true });
 
 const { test, before, after } = require('node:test');
@@ -19,6 +20,7 @@ const bcrypt = require('bcryptjs');
 
 const { app, startApp } = require('../app');
 const { sequelize, User, Service, GalleryItem, Order } = require('../models');
+const { runMigrations } = require('../config/migrations');
 
 let csrfToken;
 
@@ -104,7 +106,8 @@ before(async () => {
 
 after(async () => {
   await sequelize.close();
-  fs.rmSync(dbFile, { force: true });
+  [dbFile, `${dbFile}-wal`, `${dbFile}-shm`].forEach((file) => fs.rmSync(file, { force: true }));
+  fs.rmSync(process.env.SESSION_DIR, { recursive: true, force: true });
 });
 
 test('GET / returns 200 with CSP header', async () => {
@@ -537,4 +540,40 @@ test('robots.txt keeps admin and api out of the index', async () => {
   assert.equal(res.status, 200);
   assert.match(res.text, /Disallow: \/admin/);
   assert.match(res.text, /Disallow: \/api/);
+});
+
+test('GET /healthz reports database availability', async () => {
+  const res = await request(app).get('/healthz');
+  assert.equal(res.status, 200);
+  assert.equal(res.body.status, 'ok');
+  assert.equal(res.body.db, 'ok');
+  assert.equal(res.headers['cache-control'], 'no-store');
+});
+
+test('migrations create order indexes and stay idempotent', async () => {
+  const [journal] = await sequelize.query('PRAGMA journal_mode;');
+  assert.equal(journal[0].journal_mode, 'wal', 'WAL mode must be enabled for the file database');
+
+  const [busy] = await sequelize.query('PRAGMA busy_timeout;');
+  assert.equal(busy[0].timeout, 5000, 'busy_timeout must be set on the pooled connection');
+
+  await sequelize.transaction(async (transaction) => {
+    const [rows] = await sequelize.query('PRAGMA busy_timeout;', { transaction });
+    assert.equal(rows[0].timeout, 5000, 'transaction connections need busy_timeout too');
+  });
+
+  const [rows] = await sequelize.query(
+    "SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'Orders'"
+  );
+  const names = rows.map((row) => row.name);
+  assert.ok(names.includes('orders_status_idx'), 'status index is required for admin filters');
+  assert.ok(names.includes('orders_created_at_idx'), 'createdAt index is required for sorting');
+  assert.ok(names.includes('orders_telegram_chat_id_idx'), 'chat id index serves «Мои заявки»');
+
+  const appliedAgain = await runMigrations({
+    sequelize,
+    queryInterface: sequelize.getQueryInterface(),
+    logger: { log() {} },
+  });
+  assert.deepEqual(appliedAgain, [], 'second run must apply nothing');
 });

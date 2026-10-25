@@ -10,6 +10,7 @@ const path = require('path');
 
 const dbFile = path.join(os.tmpdir(), `photoprint-telegram-test-${process.pid}.sqlite`);
 process.env.DB_STORAGE = dbFile;
+process.env.SESSION_DIR = path.join(os.tmpdir(), `photoprint-telegram-sessions-${process.pid}`);
 fs.rmSync(dbFile, { force: true });
 
 const { test, before, after, beforeEach } = require('node:test');
@@ -92,7 +93,8 @@ before(async () => {
 
 after(async () => {
   await sequelize.close();
-  fs.rmSync(dbFile, { force: true });
+  [dbFile, `${dbFile}-wal`, `${dbFile}-shm`].forEach((file) => fs.rmSync(file, { force: true }));
+  fs.rmSync(process.env.SESSION_DIR, { recursive: true, force: true });
 });
 
 beforeEach(() => {

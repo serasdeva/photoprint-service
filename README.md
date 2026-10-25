@@ -49,6 +49,7 @@ npm start
 | `NODE_ENV`          | `development` / `production`                                         |
 | `SESSION_SECRET`    | Секрет сессий (обязательно в проде)                                  |
 | `JWT_SECRET`        | Секрет JWT-токенов (обязательно в проде)                             |
+| `SESSION_DIR`       | Каталог файловых сессий (по умолчанию `data/sessions`)               |
 | `BASE_URL`          | Базовый URL для sitemap и canonical/OG-тегов                         |
 | `CORS_ORIGINS`      | Список разрешённых origin через запятую (пусто = CORS выключен)      |
 | `ADMIN_USERNAME`    | Логин администратора (при `npm run seed`)                            |
@@ -121,6 +122,7 @@ views/                 # EJS: публичные страницы + views/admin
 public/                # css, js, uploads
 telegram/              # Бот: config, bot, notifications, keyboards, handlers/*
 seeds/seed.js          # Демо-данные
+migrations/            # Изменения схемы существующей БД (индексы и т.п.)
 tests/                 # Интеграционные тесты (node:test + supertest)
 .github/workflows/     # CI: lint + format check + tests
 utils/                 # asyncHandler, mailer, slugify, uploads
@@ -134,9 +136,17 @@ utils/                 # asyncHandler, mailer, slugify, uploads
 - Nodemailer (опционально), bcryptjs
 - Vanilla JS + собственный CSS (light/dark)
 
+## Эксплуатация
+
+- `GET /healthz` — проверка живости: `{ "status": "ok", "db": "ok", "uptime": N }`, при недоступной БД возвращает `503`. Подходит для systemd/uptime-мониторинга.
+- `SIGTERM`/`SIGINT` обрабатываются в `server.js`: сервер перестаёт принимать соединения, бот останавливается, SQLite закрывается (жёсткий таймаут — 10 с).
+- SQLite работает в режиме WAL с `busy_timeout = 5000`, поэтому сайт и бот могут писать одновременно.
+- Миграции: `sequelize.sync()` создаёт недостающие таблицы, а изменения существующей схемы (индексы, новые колонки) лежат в `migrations/*.js` и применяются при старте. Учёт — в таблице `_schema_migrations`, повторный запуск ничего не делает.
+- Сессии сайта и диалоги бота чистятся автоматически: просроченные файлы в `data/sessions` и `data/telegram-sessions` удаляются при старте и по таймеру.
+
 ## Заметки
 
 - Загруженные файлы: `public/uploads/services`, `public/uploads/gallery` (постеры — там же)
 - `data/` и `public/uploads/*` (кроме `.gitkeep`) в `.gitignore` — на новом клоне выполните `npm run seed`
-- `sequelize.sync({ alter: true })` выполняется только при `NODE_ENV=development`; в проде схема не изменяется автоматически — используйте миграции
+- `sequelize.sync({ alter: true })` выполняется только при `NODE_ENV=development`; в проде таблицы создаются через `sync()`, а изменения схемы — только через `migrations/`
 - Для видео загружайте постер в форме элемента галереи (авто-генерации превью нет)

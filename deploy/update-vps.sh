@@ -61,9 +61,9 @@ systemctl is-active --quiet "$SERVICE_NAME" || {
 
 BASE_URL="$(sed -n 's/^BASE_URL=//p' "$APP_DIR/.env" | tail -n 1 | tr -d '\r\"' | sed 's:/*$::')"
 [[ "$BASE_URL" == https://* || "$BASE_URL" == http://* ]] || fail 'BASE_URL is missing or invalid in .env.'
-if ! curl --fail --silent --show-error --max-time 15 -o /dev/null "$BASE_URL/"; then
+if ! curl --fail --silent --show-error --max-time 15 -o /dev/null "$BASE_URL/healthz"; then
   journalctl -u "$SERVICE_NAME" -n 80 --no-pager >&2 || true
-  fail "Updated service is active, but $BASE_URL/ did not return HTTP success. Backup: $BACKUP_DIR"
+  fail "Updated service is active, but $BASE_URL/healthz did not return HTTP success. Backup: $BACKUP_DIR"
 fi
 
 printf 'Update finished successfully. Commit: %s\n' "$REMOTE_COMMIT"

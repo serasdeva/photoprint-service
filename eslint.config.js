@@ -5,6 +5,7 @@ module.exports = [
   {
     ignores: [
       'node_modules/**',
+      '.zwork/**',
       'data/**',
       'public/uploads/**',
       'public/gallery-placeholders/**',

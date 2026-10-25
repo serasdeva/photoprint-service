@@ -68,6 +68,65 @@ class FileSessionStore extends session.Store {
   touch(sid, sess, cb) {
     this.set(sid, sess, cb);
   }
+
+  _isStale(file) {
+    try {
+      return Date.now() - fs.statSync(file).mtimeMs > this.ttlMs;
+    } catch (error) {
+      // Файла уже нет (ENOENT) или он недоступен — удалять по этому признаку нельзя.
+      return false;
+    }
+  }
+
+  /**
+   * Удаляет просроченные и битые файлы сессий. Без этого каталог data/sessions растёт
+   * бесконечно: express-session не чистит файлы, к которым больше не обращаются.
+   */
+  prune() {
+    let entries;
+    try {
+      entries = fs.readdirSync(this.dir);
+    } catch (error) {
+      this.logFn(error);
+      return 0;
+    }
+
+    let removed = 0;
+    for (const entry of entries) {
+      if (!entry.endsWith('.json')) {
+        continue;
+      }
+
+      const file = path.join(this.dir, entry);
+      let expired = this._isStale(file);
+
+      try {
+        const sess = JSON.parse(fs.readFileSync(file, 'utf8'));
+        const expires = sess && sess.cookie && sess.cookie.expires;
+        if (expires) {
+          expired = new Date(expires).getTime() < Date.now();
+        }
+      } catch (error) {
+        // Битый JSON или нечитаемый файл бесполезен — тоже удаляем.
+        expired = true;
+      }
+
+      if (!expired) {
+        continue;
+      }
+
+      try {
+        fs.unlinkSync(file);
+        removed += 1;
+      } catch (error) {
+        if (error.code !== 'ENOENT') {
+          this.logFn(error);
+        }
+      }
+    }
+
+    return removed;
+  }
 }
 
 module.exports = FileSessionStore;
