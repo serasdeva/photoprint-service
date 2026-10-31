@@ -209,15 +209,35 @@ app.get(
     const base = (process.env.BASE_URL || 'http://localhost:3000').replace(/\/+$/, '');
     const services = await Service.findAll({
       where: { isActive: true },
-      attributes: ['slug'],
+      attributes: ['slug', 'updatedAt'],
+      order: [['order', 'ASC']],
       raw: true,
     });
-    const paths = ['/', '/services', '/gallery', '/contacts', '/privacy'].concat(
-      services.map((service) => `/services/${service.slug}`)
+
+    // lastmod помогаем поисковику понять, что страница услуги обновилась.
+    const toLastmod = (value) => {
+      const date = value instanceof Date ? value : new Date(value);
+      return Number.isNaN(date.getTime()) ? null : date.toISOString();
+    };
+
+    const paths = [
+      { pathname: '/', lastmod: null },
+      { pathname: '/services', lastmod: null },
+      { pathname: '/gallery', lastmod: null },
+      { pathname: '/contacts', lastmod: null },
+      { pathname: '/privacy', lastmod: null },
+    ].concat(
+      services.map((service) => ({
+        pathname: `/services/${service.slug}`,
+        lastmod: toLastmod(service.updatedAt),
+      }))
     );
 
     const entries = paths
-      .map((pathname) => `  <url><loc>${base}${pathname}</loc></url>`)
+      .map(({ pathname, lastmod }) => {
+        const lastmodTag = lastmod ? `<lastmod>${lastmod}</lastmod>` : '';
+        return `  <url><loc>${base}${pathname}</loc>${lastmodTag}</url>`;
+      })
       .join('\n');
 
     res.type('application/xml');

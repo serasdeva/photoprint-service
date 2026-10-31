@@ -221,6 +221,39 @@ test('GET /sitemap.xml includes static and service URLs', async () => {
   assert.equal(res.status, 200);
   assert.match(res.text, /\/privacy/);
   assert.match(res.text, /\/services\/test-service/);
+  // У услуг должен быть lastmod из updatedAt, иначе поисковики не видят свежести.
+  assert.match(
+    res.text,
+    /<loc>[^<]*\/services\/test-service<\/loc><lastmod>\d{4}-\d{2}-\d{2}T[\d:.]+Z<\/lastmod>/
+  );
+});
+
+test('service meta description is truncated to 160 characters at a word boundary', async () => {
+  const longDescription = `${'Очень длинное описание услуги печати фотографий. '.repeat(8)}Конец.`;
+  const slug = `meta-long-${Date.now()}`;
+  await Service.create({
+    title: 'Длинное описание',
+    slug,
+    description: longDescription,
+    price: 10,
+    priceUnit: 'шт',
+    icon: 'fa-print',
+    order: 99,
+    isActive: true,
+  });
+
+  const res = await request(app).get(`/services/${slug}`);
+  assert.equal(res.status, 200);
+  const meta = res.text.match(/<meta name="description" content="([^"]*)" \/>/);
+  assert.ok(meta, 'meta description should be rendered');
+  const value = meta[1];
+  assert.ok(value.length <= 160, `meta description is ${value.length} chars, expected <= 160`);
+  assert.ok(value.endsWith('…'), 'truncated description should end with an ellipsis');
+  assert.ok(!value.includes('  '), 'whitespace should be collapsed');
+
+  // Короткое описание не трогаем.
+  const short = await request(app).get('/services/test-service');
+  assert.match(short.text, /<meta name="description" content="Для проверки sitemap" \/>/);
 });
 
 test('POST /api/orders without CSRF token is rejected', async () => {

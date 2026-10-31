@@ -3,9 +3,27 @@
   var siteName = siteSettings.siteName || 'PhotoPrint Service';
   var phoneText = siteSettings.phone || '+7 (495) 555-11-22';
   var phoneHref = 'tel:' + String(phoneText).replace(/[^\d+]/g, '');
-  var metaDescription = (typeof description !== 'undefined' && description)
-    ? description
-    : 'Печать фотографий, копирование документов, оформление документов и набор текста — быстро и по доступной цене.';
+  var META_DESCRIPTION_LIMIT = 160;
+  // Описание услуги приходит из БД целиком; поисковики обрезают всё после ~160 символов
+  // по своему разумению, поэтому режем сами — по границе слова и с многоточием.
+  var truncateMetaDescription = function (text, limit) {
+    var normalized = String(text).replace(/\s+/g, ' ').trim();
+    if (normalized.length <= limit) {
+      return normalized;
+    }
+    var cut = normalized.slice(0, limit - 1);
+    var lastSpace = cut.lastIndexOf(' ');
+    if (lastSpace > limit * 0.6) {
+      cut = cut.slice(0, lastSpace);
+    }
+    return cut.replace(/[\s,;:.\-—]+$/, '') + '…';
+  };
+  var metaDescription = truncateMetaDescription(
+    (typeof description !== 'undefined' && description)
+      ? description
+      : 'Печать фотографий, копирование документов, оформление документов и набор текста — быстро и по доступной цене.',
+    META_DESCRIPTION_LIMIT
+  );
   var ogWidth = (typeof ogImageWidth !== 'undefined') ? ogImageWidth : null;
   var ogHeight = (typeof ogImageHeight !== 'undefined') ? ogImageHeight : null;
   var ogAlt = (typeof ogImageAlt !== 'undefined' && ogImageAlt)
