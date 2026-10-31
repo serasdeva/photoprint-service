@@ -23,7 +23,7 @@
 - [x] B4. `POST /api/orders` возвращает только `{ success, message }` — `controllers/orderController.js:33-37`
 - [x] B5. Составной индекс заявок `(status, createdAt)` вместо одиночного `status` — `migrations/0002-orders-status-created-at.js`, `models/Order.js`
 - [x] B6. Составной индекс «Мои заявки» `(telegramChatId, createdAt)` вместо одиночного `telegramChatId` — `migrations/0003-orders-telegram-chat-created-at.js`, `models/Order.js`
-- [x] B7. Отдельный лимит постера 8 МБ и тесты загрузки админки — `middleware/upload.js`, `routes/admin.js`, `tests/app.test.js`
+- [x] B7. Отдельный лимит постера 8 МБ, общий лимит 25 МБ и тесты загрузки админки — `middleware/upload.js`, `routes/admin.js`, `tests/app.test.js`
 
 ## C. Производительность
 

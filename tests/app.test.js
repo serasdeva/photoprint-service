@@ -446,7 +446,7 @@ test('multipart admin form requires CSRF token (regression)', async () => {
   await created.destroy();
 });
 
-test('admin uploads files, rejects wrong types and oversized posters', async () => {
+test('admin uploads files, rejects wrong types, oversized posters and videos', async () => {
   const jar = await loginJar();
   const uploadsRoot = path.join(__dirname, '..', 'public');
   const diskPath = (url) => path.join(uploadsRoot, url.replace(/^\//, ''));
@@ -455,6 +455,7 @@ test('admin uploads files, rejects wrong types and oversized posters', async () 
   const badServiceTitle = `Услуга с svg ${Date.now()}`;
   const galleryTitle = `Работа с постером ${Date.now()}`;
   const bigTitle = `Постер слишком большой ${Date.now()}`;
+  const bigVideoTitle = `Видео слишком большое ${Date.now()}`;
   const badTitle = `Плохой тип ${Date.now()}`;
   // Настоящий PNG 1×1: фильтр проверяет расширение и MIME, но валидный файл честнее.
   const PNG_1X1 = Buffer.from(
@@ -567,10 +568,42 @@ test('admin uploads files, rejects wrong types and oversized posters', async () 
       filesBefore,
       'rejected poster and video must be removed from disk'
     );
+
+    // Общий лимит запроса: multer сам обрывает файл на 25 МБ ещё до проверок роутов.
+    const bigVideo = await request(app)
+      .post('/admin/gallery')
+      .set('Cookie', cookieHeader(jar))
+      .set('Accept', 'text/html')
+      .field('_csrf', csrfToken)
+      .field('title', bigVideoTitle)
+      .attach('media', Buffer.alloc(25 * 1024 * 1024 + 1), {
+        filename: 'huge.mp4',
+        contentType: 'video/mp4',
+      });
+
+    assert.equal(bigVideo.status, 302);
+    assert.match(bigVideo.headers.location, /\/admin\/gallery\/new/);
+    assert.equal(await GalleryItem.findOne({ where: { title: bigVideoTitle } }), null);
+
+    collectCookies(bigVideo, jar);
+    const videoForm = await request(app).get('/admin/gallery/new').set('Cookie', cookieHeader(jar));
+    assert.match(videoForm.text, /Файл больше 25 МБ/, 'admin must see a Russian size message');
+
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      if (fs.readdirSync(galleryDir).sort().join('|') === filesBefore.join('|')) {
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    assert.deepEqual(
+      fs.readdirSync(galleryDir).sort(),
+      filesBefore,
+      'multer must remove the partial video it aborted'
+    );
   } finally {
     await Service.destroy({ where: { title: [serviceTitle, badServiceTitle] } });
     await GalleryItem.destroy({
-      where: { title: [galleryTitle, bigTitle, badTitle] },
+      where: { title: [galleryTitle, bigTitle, bigVideoTitle, badTitle] },
     });
     createdFiles.forEach((file) => fs.rmSync(file, { force: true }));
   }

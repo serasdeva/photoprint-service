@@ -62,14 +62,19 @@ function failUpload(req, res, message) {
   );
 }
 
-function handleUpload(uploadMiddleware) {
+function handleUpload(uploadMiddleware, maxMb) {
   return (req, res, next) => {
     uploadMiddleware(req, res, (err) => {
       if (!err) {
         return next();
       }
 
-      return failUpload(req, res, err.message || 'Ошибка загрузки файла');
+      // У multer сообщение «File too large» английское и без цифры лимита.
+      const message =
+        err.code === 'LIMIT_FILE_SIZE'
+          ? `Файл больше ${maxMb} МБ — уменьшите его.`
+          : err.message || 'Ошибка загрузки файла';
+      return failUpload(req, res, message);
     });
   };
 }
@@ -201,14 +206,14 @@ router.get('/services/new', asyncHandler(renderServiceForm));
 router.get('/services/:id/edit', asyncHandler(renderServiceForm));
 router.post(
   '/services',
-  handleUpload(uploadServiceImage.single('image')),
+  handleUpload(uploadServiceImage.single('image'), 5),
   verifyCsrfAfterUpload,
   validate(serviceRules),
   asyncHandler(saveService)
 );
 router.post(
   '/services/:id',
-  handleUpload(uploadServiceImage.single('image')),
+  handleUpload(uploadServiceImage.single('image'), 5),
   verifyCsrfAfterUpload,
   validate(serviceRules),
   asyncHandler(saveService)
@@ -225,7 +230,7 @@ router.get('/gallery/new', asyncHandler(renderGalleryForm));
 router.get('/gallery/:id/edit', asyncHandler(renderGalleryForm));
 router.post(
   '/gallery',
-  handleUpload(uploadGalleryMediaFields),
+  handleUpload(uploadGalleryMediaFields, 25),
   rejectOversizedPoster,
   verifyCsrfAfterUpload,
   validate(galleryRules),
@@ -233,7 +238,7 @@ router.post(
 );
 router.post(
   '/gallery/:id',
-  handleUpload(uploadGalleryMediaFields),
+  handleUpload(uploadGalleryMediaFields, 25),
   rejectOversizedPoster,
   verifyCsrfAfterUpload,
   validate(galleryRules),
