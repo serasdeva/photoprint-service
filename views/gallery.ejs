@@ -33,7 +33,7 @@
         <% }) %>
       </div>
 
-      <% if (!items.length) { %>
+      <% if (!total) { %>
         <div class="card empty-state">
           <i class="fa-regular fa-images"></i>
           <% if (typeof filters !== 'undefined' && filters && filters.q) { %>
@@ -47,7 +47,13 @@
           <% } %>
         </div>
       <% } else { %>
-        <div class="gallery-grid" data-gallery-grid>
+        <div
+          class="gallery-grid"
+          data-gallery-grid
+          data-gallery-total="<%= total %>"
+          data-gallery-page-size="<%= pageSize %>"
+          data-gallery-q="<%= typeof filters !== 'undefined' && filters.q ? filters.q : '' %>"
+        >
           <% items.forEach((item) => { %>
             <figure
               class="gallery-item reveal"
@@ -77,7 +83,7 @@
             <% }) %>
         </div>
         <div class="gallery-toolbar">
-          <span class="gallery-status" data-gallery-status></span>
+          <span class="gallery-status" data-gallery-status aria-live="polite"></span>
           <button type="button" class="btn btn-secondary" data-gallery-more hidden>
             Показать ещё
           </button>

@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const grid = document.querySelector('[data-gallery-grid]');
   const filterButtons = Array.from(document.querySelectorAll('[data-filter]'));
-  const allItems = Array.from(document.querySelectorAll('[data-gallery-item]'));
+  const moreButton = document.querySelector('[data-gallery-more]');
+  const statusNode = document.querySelector('[data-gallery-status]');
   const lightbox = document.getElementById('lightbox');
   const lightboxBody = document.getElementById('lightbox-body');
   const lightboxCaption = document.getElementById('lightbox-caption');
@@ -9,78 +11,166 @@ document.addEventListener('DOMContentLoaded', () => {
   const prevButton = document.getElementById('lightbox-prev');
   const nextButton = document.getElementById('lightbox-next');
 
-  let visibleItems = allItems;
+  if (!grid) return;
+
+  const API_URL = '/api/gallery';
+  const fallbackImage = '/gallery-placeholders/sample-1.svg';
+
+  const state = {
+    total: Number.parseInt(grid.getAttribute('data-gallery-total'), 10) || 0,
+    pageSize: Number.parseInt(grid.getAttribute('data-gallery-page-size'), 10) || 12,
+    filter: 'all',
+    query: grid.getAttribute('data-gallery-q') || '',
+    loaded: 0,
+    loading: false,
+    failed: false,
+  };
+
+  let lightboxItems = [];
   let currentIndex = 0;
   let lastFocused = null;
-  const fallbackImage = '/gallery-placeholders/sample-1.svg';
-  const PAGE_SIZE = 12;
-  const moreButton = document.querySelector('[data-gallery-more]');
-  const statusNode = document.querySelector('[data-gallery-status]');
-  let activeFilter = 'all';
-  let shownCount = PAGE_SIZE;
 
-  const matchesFilter = (item) =>
-    activeFilter === 'all' || item.getAttribute('data-category') === activeFilter;
+  const loadedItems = () => Array.from(grid.querySelectorAll('[data-gallery-item]'));
 
-  const renderGallery = () => {
-    const matched = allItems.filter(matchesFilter);
-    let matchedIndex = 0;
-
-    allItems.forEach((item) => {
-      if (!matchesFilter(item)) {
-        item.classList.add('is-hidden');
-        return;
-      }
-      const withinWindow = matchedIndex < shownCount;
-      item.classList.toggle('is-hidden', !withinWindow);
-      matchedIndex += 1;
-    });
-
+  const updateToolbar = () => {
     if (statusNode) {
-      statusNode.textContent = matched.length
-        ? `Показано ${Math.min(shownCount, matched.length)} из ${matched.length}`
-        : '';
+      if (state.failed) {
+        statusNode.textContent = 'Не удалось догрузить работы. Обновите страницу.';
+      } else if (state.total) {
+        statusNode.textContent = `Показано ${state.loaded} из ${state.total}`;
+      } else {
+        statusNode.textContent = '';
+      }
     }
     if (moreButton) {
-      moreButton.hidden = shownCount >= matched.length;
+      moreButton.hidden = state.loaded >= state.total;
+      moreButton.disabled = state.loading;
     }
   };
 
-  const handleMediaError = (element) => {
+  const buildCard = (item) => {
+    const figure = document.createElement('figure');
+    figure.className = 'gallery-item';
+    figure.tabIndex = 0;
+    figure.setAttribute('role', 'button');
+
+    const category = item.category || 'general';
+    const title = item.title || '';
+    figure.setAttribute('data-gallery-item', '');
+    figure.setAttribute('data-category', category);
+    figure.setAttribute('data-src', item.url || '');
+    figure.setAttribute('data-mime', item.type === 'video' ? 'video' : 'image');
+    figure.setAttribute('data-poster', item.thumbnail || '');
+    figure.setAttribute('data-title', title);
+    figure.setAttribute('aria-label', `Открыть ${title}`);
+
+    let media;
+    if (item.type === 'video') {
+      media = document.createElement('video');
+      media.muted = true;
+      media.playsInline = true;
+      media.preload = 'metadata';
+      if (item.thumbnail) media.poster = item.thumbnail;
+      media.src = item.url;
+      const badge = document.createElement('span');
+      badge.className = 'play-badge';
+      const icon = document.createElement('i');
+      icon.className = 'fa-solid fa-play';
+      badge.append(icon);
+      figure.append(media, badge);
+    } else {
+      media = document.createElement('img');
+      media.alt = title;
+      media.loading = 'lazy';
+      media.src = item.url;
+      figure.append(media);
+    }
+    watchMediaError(media);
+
+    const caption = document.createElement('figcaption');
+    const strong = document.createElement('strong');
+    strong.textContent = title;
+    caption.append(strong);
+    if (item.description) {
+      const description = document.createElement('div');
+      description.className = 'text-muted';
+      description.textContent = item.description;
+      caption.append(description);
+    }
+    figure.append(caption);
+
+    return figure;
+  };
+
+  const handleLoadFailure = (element) => {
     if (element.tagName === 'IMG') {
       if (element.getAttribute('src') === fallbackImage) return;
-      element.addEventListener(
-        'error',
-        () => {
-          element.src = fallbackImage;
-        },
-        { once: true }
-      );
-      if (element.complete && element.naturalWidth === 0) {
-        element.src = fallbackImage;
-      }
+      element.src = fallbackImage;
     } else if (element.tagName === 'VIDEO') {
-      element.addEventListener(
-        'error',
-        () => {
-          element.poster = fallbackImage;
-          element.pause();
-          element.removeAttribute('src');
-          element.load();
-        },
-        { once: true }
-      );
+      element.poster = fallbackImage;
+      element.pause();
+      element.removeAttribute('src');
+      element.load();
+    }
+  };
+
+  const watchMediaError = (element) => {
+    element.addEventListener('error', () => handleLoadFailure(element), { once: true });
+  };
+
+  const fetchPage = async (offset) => {
+    const params = new URLSearchParams();
+    params.set('offset', String(offset));
+    params.set('limit', String(state.pageSize));
+    if (state.filter !== 'all') params.set('category', state.filter);
+    if (state.query) params.set('q', state.query);
+
+    const response = await fetch(`${API_URL}?${params.toString()}`, {
+      headers: { accept: 'application/json' },
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
+  };
+
+  const loadFromApi = async (offset, { replace = false } = {}) => {
+    if (state.loading) return;
+    state.loading = true;
+    updateToolbar();
+
+    try {
+      const data = await fetchPage(offset);
+      const items = Array.isArray(data.items) ? data.items : [];
+      state.failed = false;
+
+      if (replace) {
+        loadedItems().forEach((item) => item.remove());
+        state.loaded = 0;
+      }
+      state.total = Number.parseInt(data.total, 10) || 0;
+
+      const fragment = document.createDocumentFragment();
+      items.forEach((item) => fragment.append(buildCard(item)));
+      grid.append(fragment);
+      state.loaded += items.length;
+      // серверная первая страница может не совпадать с фильтром — тогда она перезапрошена
+      if (state.loaded > state.total) state.loaded = state.total;
+    } catch {
+      // без JS-фолбэка сетка остаётся серверной: показываем сообщение и поднимаем кнопку обратно
+      state.failed = true;
+    } finally {
+      state.loading = false;
+      updateToolbar();
     }
   };
 
   const renderCounter = () => {
     if (lightboxCounter) {
-      lightboxCounter.textContent = `${currentIndex + 1} / ${visibleItems.length}`;
+      lightboxCounter.textContent = `${currentIndex + 1} / ${lightboxItems.length}`;
     }
   };
 
   const renderSlide = () => {
-    const item = visibleItems[currentIndex];
+    const item = lightboxItems[currentIndex];
     if (!item || !lightboxBody) return;
 
     const src = item.getAttribute('data-src');
@@ -96,13 +186,19 @@ document.addEventListener('DOMContentLoaded', () => {
       video.playsInline = true;
       const poster = item.getAttribute('data-poster');
       if (poster) video.poster = poster;
-      handleMediaError(video);
+      video.addEventListener('error', () => handleLoadFailure(video), { once: true });
       if (src) video.src = src;
       lightboxBody.append(video);
     } else {
       const image = document.createElement('img');
       image.alt = title;
-      handleMediaError(image);
+      image.addEventListener(
+        'error',
+        () => {
+          if (image.getAttribute('src') !== fallbackImage) image.src = fallbackImage;
+        },
+        { once: true }
+      );
       image.src = src || fallbackImage;
       lightboxBody.append(image);
     }
@@ -112,18 +208,17 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const getFocusable = () =>
-    lightbox
-      ? Array.from(
-          lightbox.querySelectorAll('button, [href], [tabindex]:not([tabindex="-1"])')
-        ).filter((el) => !el.hasAttribute('hidden') && el.getAttribute('aria-hidden') !== 'true')
-      : [];
+    Array.from(lightbox.querySelectorAll('button, [href], [tabindex]:not([tabindex="-1"])')).filter(
+      (el) => !el.hasAttribute('hidden') && el.getAttribute('aria-hidden') !== 'true'
+    );
+
   const trapFocus = (e) => {
     if (!lightbox?.classList.contains('open')) return;
     if (e.key !== 'Tab') return;
     const focusable = getFocusable();
     if (!focusable.length) return;
-    const first = focusable[0],
-      last = focusable[focusable.length - 1];
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
     if (e.shiftKey && document.activeElement === first) {
       e.preventDefault();
       last.focus();
@@ -132,12 +227,13 @@ document.addEventListener('DOMContentLoaded', () => {
       first.focus();
     }
   };
+
   const openLightbox = (item) => {
     if (!lightbox) return;
-    visibleItems = allItems.filter((el) => !el.classList.contains('is-hidden'));
-    // fallback to all matched if pagination hides some
-    if (!visibleItems.includes(item)) visibleItems = allItems.filter(matchesFilter);
-    currentIndex = Math.max(visibleItems.indexOf(item), 0);
+    // листаем только то, что реально загружено
+    lightboxItems = loadedItems();
+    if (!lightboxItems.length || !lightboxItems.includes(item)) return;
+    currentIndex = Math.max(lightboxItems.indexOf(item), 0);
     lastFocused = document.activeElement;
     lightbox.classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -149,50 +245,64 @@ document.addEventListener('DOMContentLoaded', () => {
   const closeLightbox = () => {
     if (!lightbox) return;
     lightbox.classList.remove('open');
-    if (lightboxBody) lightboxBody.innerHTML = '';
+    if (lightboxBody) lightboxBody.replaceChildren();
     document.body.style.overflow = '';
     document.removeEventListener('keydown', trapFocus);
     lastFocused?.focus?.();
   };
 
   const step = (delta) => {
-    if (!visibleItems.length) return;
-    currentIndex = (currentIndex + delta + visibleItems.length) % visibleItems.length;
+    if (!lightboxItems.length) return;
+    currentIndex = (currentIndex + delta + lightboxItems.length) % lightboxItems.length;
     renderSlide();
   };
 
-  if (filterButtons.length && allItems.length) {
-    filterButtons.forEach((button) => {
-      button.addEventListener('click', () => {
-        activeFilter = button.getAttribute('data-filter') || 'all';
-        shownCount = PAGE_SIZE;
-        filterButtons.forEach((item) => item.classList.toggle('active', item === button));
-        renderGallery();
-      });
-    });
-  }
+  const setActiveChip = (value) => {
+    filterButtons.forEach((button) =>
+      button.classList.toggle('active', (button.getAttribute('data-filter') || 'all') === value)
+    );
+  };
 
-  moreButton?.addEventListener('click', () => {
-    shownCount += PAGE_SIZE;
-    renderGallery();
-  });
-
-  if (allItems.length) {
-    renderGallery();
-  }
-
-  allItems.forEach((item) => {
-    const thumbnail = item.querySelector('img, video');
-    if (thumbnail) handleMediaError(thumbnail);
-
-    item.addEventListener('click', () => openLightbox(item));
-    item.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        openLightbox(item);
-      }
+  filterButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      const value = button.getAttribute('data-filter') || 'all';
+      if (value === state.filter) return;
+      state.filter = value;
+      setActiveChip(value);
+      loadFromApi(0, { replace: true });
     });
   });
+
+  moreButton?.addEventListener('click', () => loadFromApi(state.loaded));
+
+  // Поиск остаётся серверным GET: canonical и noindex для ?q= уже настроены,
+  // а догрузка по category/q работает от серверной первой страницы.
+
+  // делегирование: карточки догружаются после навешивания обработчиков
+  grid.addEventListener('click', (event) => {
+    const item = event.target.closest('[data-gallery-item]');
+    if (item && grid.contains(item)) openLightbox(item);
+  });
+  grid.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    const item = event.target.closest('[data-gallery-item]');
+    if (!item || !grid.contains(item)) return;
+    event.preventDefault();
+    openLightbox(item);
+  });
+
+  loadedItems().forEach((item) => {
+    const media = item.querySelector('img, video');
+    if (media) watchMediaError(media);
+  });
+
+  // серверная первая страница уже в DOM — считаем её загруженной
+  state.loaded = loadedItems().length;
+  updateToolbar();
+
+  if (filterButtons.length) {
+    setActiveChip(state.filter);
+  }
 
   closeButton?.addEventListener('click', closeLightbox);
   prevButton?.addEventListener('click', () => step(-1));

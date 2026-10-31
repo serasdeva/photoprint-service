@@ -1,4 +1,5 @@
 const { GalleryItem } = require('../models');
+const { filterByTerm } = require('../utils/search');
 
 const CATEGORY_LABELS = {
   general: 'Общее',
@@ -8,6 +9,11 @@ const CATEGORY_LABELS = {
   scan: 'Сканирование',
   copy: 'Копирование',
 };
+
+// Первая страница рендерится на сервере, остальное догружает /api/gallery.
+const SSR_PAGE_SIZE = 12;
+// Потолок limit для API: без него одним запросом можно выложить всю галерею.
+const MAX_API_LIMIT = 48;
 
 function buildCategoryList(items) {
   const seen = new Map();
@@ -32,31 +38,54 @@ function buildCategoryList(items) {
     .map(([value, label]) => ({ value, label }));
 }
 
-async function listPublicGallery(req, res) {
-  const qRaw = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 120) : '';
+function parsePositiveInt(value, fallback) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+async function queryGallery({ q = '', category = '', offset = 0, limit = SSR_PAGE_SIZE } = {}) {
   const allItems = await GalleryItem.findAll({ order: [['order', 'ASC']], raw: true });
-  // SQLite LIKE is case-insensitive only for ASCII; filter in JS so Cyrillic search works.
-  const needle = qRaw.toLowerCase();
-  const items = needle
-    ? allItems.filter((item) =>
-        [item.title, item.category, item.description]
-          .filter(Boolean)
-          .some((value) => String(value).toLowerCase().includes(needle))
-      )
-    : allItems;
+  // Категории всегда считаем по всем работам: иначе чипы исчезают при фильтре.
+  const categories = buildCategoryList(allItems);
+
+  // SQLite LIKE не понимает регистр non-ASCII, поэтому фильтр и пагинация — в JS.
+  const matched = filterByTerm(allItems, q, ['title', 'category', 'description']);
+  const inCategory = category
+    ? matched.filter((item) => (item.category || 'general') === category)
+    : matched;
+
+  return {
+    items: inCategory.slice(offset, offset + limit),
+    total: inCategory.length,
+    allTotal: allItems.length,
+    categories,
+  };
+}
+
+async function listPublicGallery(req, res) {
+  const q = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 120) : '';
+  const { items, total, categories } = await queryGallery({ q });
 
   res.render('gallery', {
     title: 'Галерея',
     items,
-    categories: buildCategoryList(allItems),
-    filters: { q: qRaw },
+    total,
+    pageSize: SSR_PAGE_SIZE,
+    categories,
+    filters: { q },
     activePage: 'gallery',
   });
 }
 
 async function getGalleryApi(req, res) {
-  const items = await GalleryItem.findAll({ order: [['order', 'ASC']], raw: true });
-  res.json(items);
+  const q = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 120) : '';
+  const category =
+    typeof req.query.category === 'string' ? req.query.category.trim().slice(0, 40) : '';
+  const offset = parsePositiveInt(req.query.offset, 0);
+  const limit = Math.min(parsePositiveInt(req.query.limit, SSR_PAGE_SIZE), MAX_API_LIMIT);
+  const { items, total } = await queryGallery({ q, category, offset, limit });
+
+  res.json({ items, total });
 }
 
 function pickUpload(req, field) {
@@ -98,7 +127,10 @@ async function createGalleryItem(req, _res) {
 module.exports = {
   listPublicGallery,
   getGalleryApi,
+  queryGallery,
   createGalleryItem,
   pickUpload,
   resolveGalleryType,
+  SSR_PAGE_SIZE,
+  MAX_API_LIMIT,
 };

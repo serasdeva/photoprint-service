@@ -611,3 +611,114 @@ test('migrations create order indexes and stay idempotent', async () => {
   });
   assert.deepEqual(appliedAgain, [], 'second run must apply nothing');
 });
+
+test('gallery renders first page on server and paginates through the API', async () => {
+  // Больше MAX_API_LIMIT работ, чтобы проверка потолка limit была различимой.
+  const TOTAL = 60;
+  const created = await GalleryItem.bulkCreate(
+    Array.from({ length: TOTAL }, (_, i) => ({
+      title: `Пагинация ${String(i + 1).padStart(2, '0')}`,
+      type: 'image',
+      url: '/gallery-placeholders/sample-2.svg',
+      category: i < 5 ? 'scan' : 'photo',
+      description: '',
+      order: 100 + i,
+    }))
+  );
+  const cleanup = async () => {
+    await GalleryItem.destroy({ where: { id: created.map((item) => item.id) } });
+  };
+
+  try {
+    // В базе есть работы из других тестов, поэтому ожидаемую страницу считаем по API,
+    // а не хардкодом: проверяем, что SSR отдаёт ровно те же карточки, что и лимит=размер страницы.
+    const ordered = [];
+    for (let offset = 0; ; offset += 48) {
+      const batch = await request(app).get(`/api/gallery?limit=48&offset=${offset}`);
+      ordered.push(...batch.body.items);
+      if (batch.body.items.length < 48) break;
+    }
+    assert.equal(ordered.length, TOTAL + 1);
+    assert.equal(
+      ordered[0].title,
+      'Тестовая работа',
+      'other tests leave their works in the gallery'
+    );
+    const expectedFirstPage = ordered.slice(0, 12).map((item) => item.title);
+    const beyondFirstPage = ordered.slice(12).map((item) => item.title);
+
+    const page = await request(app).get('/gallery');
+    assert.equal(page.status, 200);
+    assert.match(page.text, /data-gallery-grid/, 'grid must expose the load-more hook');
+    assert.equal(
+      (page.text.match(/data-gallery-item/g) || []).length,
+      12,
+      'SSR must render exactly one page of items'
+    );
+    assert.match(
+      page.text,
+      new RegExp(`data-gallery-total="${TOTAL + 1}"`),
+      'total counts all unfiltered works'
+    );
+    assert.match(
+      page.text,
+      /data-gallery-page-size="12"/,
+      'SSR page size is exposed to the client'
+    );
+    assert.ok(
+      expectedFirstPage.every((title) => page.text.includes(title)),
+      `first HTML page must carry the first 12 works: ${expectedFirstPage.join(', ')}`
+    );
+    assert.ok(
+      beyondFirstPage.every((title) => !page.text.includes(title)),
+      'works beyond the first page must not be in the HTML'
+    );
+    assert.ok(expectedFirstPage.some((title) => title.startsWith('Пагинация')));
+
+    const first = await request(app).get('/api/gallery?limit=5&offset=10');
+    assert.equal(first.status, 200);
+    assert.equal(first.body.items.length, 5);
+    assert.equal(first.body.total, TOTAL + 1);
+    assert.deepEqual(
+      first.body.items.map((item) => item.title),
+      ordered.slice(10, 15).map((item) => item.title),
+      'offset/limit slice the same ordering the SSR page uses'
+    );
+
+    const capped = await request(app).get('/api/gallery?limit=500');
+    assert.equal(capped.body.items.length, 48, 'limit must be capped at 48');
+
+    const scanned = await request(app).get('/api/gallery?category=scan&limit=48');
+    assert.equal(scanned.body.items.length, 5, 'category filter keeps only its own works');
+    assert.equal(scanned.body.total, 5);
+    assert.ok(
+      scanned.body.items.every((item) => item.category === 'scan'),
+      'every returned item belongs to the category'
+    );
+
+    const searched = await request(app).get('/api/gallery?q=пагинация&limit=48');
+    assert.equal(searched.body.total, TOTAL, 'Cyrillic q must match regardless of case');
+
+    const searchedPage = await request(app).get('/api/gallery?q=ПАГИНАЦИЯ&limit=5&offset=25');
+    assert.equal(searchedPage.body.items.length, 5, 'offset applies to the filtered subset');
+    assert.equal(searchedPage.body.items[0].title, 'Пагинация 26');
+
+    const htmlSearch = await request(app).get('/gallery?q=пагинация');
+    assert.equal(htmlSearch.status, 200);
+    assert.match(
+      htmlSearch.text,
+      new RegExp(`data-gallery-total="${TOTAL}"`),
+      'SSR total follows the search filter'
+    );
+    assert.match(
+      htmlSearch.text,
+      /data-gallery-q="пагинация"/,
+      'query is passed to the client for load-more'
+    );
+
+    const emptyCategory = await request(app).get('/api/gallery?category=__none__');
+    assert.deepEqual(emptyCategory.body, { items: [], total: 0 });
+  } finally {
+    await cleanup();
+  }
+});

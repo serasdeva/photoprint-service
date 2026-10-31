@@ -1574,6 +1574,11 @@ html[data-theme='dark'] .public-site {
   margin-top: 24px;
 }
 
+/* .btn сам задаёт display, поэтому перебивает браузерное [hidden] { display: none }. */
+.gallery-toolbar [hidden] {
+  display: none !important;
+}
+
 .gallery-status {
   color: var(--text-3);
   font-size: 0.9rem;

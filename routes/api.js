@@ -12,9 +12,15 @@ const orderLimiter = rateLimit({
   max: 20,
   message: 'Слишком много заявок. Попробуйте позже.',
 });
+// Чтение и запись лимитятся раздельно: листание галереи не должно съедать квоту заявок.
+const readLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  message: 'Слишком много запросов. Попробуйте позже.',
+});
 
-router.get('/services', asyncHandler(getServiceApi));
-router.get('/gallery', asyncHandler(getGalleryApi));
+router.get('/services', readLimiter, asyncHandler(getServiceApi));
+router.get('/gallery', readLimiter, asyncHandler(getGalleryApi));
 
 router.post(
   '/orders',

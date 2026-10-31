@@ -9,7 +9,6 @@ const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const FileSessionStore = require('./utils/fileSessionStore');
 const flash = require('connect-flash');
-const rateLimit = require('express-rate-limit');
 
 const { sequelize, syncDatabase } = require('./config/db');
 const { runMigrations } = require('./config/migrations');
@@ -173,12 +172,8 @@ app.get('/healthz', async (req, res) => {
   }
 });
 
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 60,
-  message: 'Слишком много запросов. Попробуйте позже.',
-});
-app.use('/api', apiLimiter);
+// Read/write лимитеры раздельные и объявлены в routes/api.js: общий лимитер на весь /api
+// заставлял листание галереи съедать квоту отправки заявок.
 
 app.use('/', indexRouter);
 app.use('/services', servicesRouter);
