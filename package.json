@@ -4,13 +4,17 @@
   "description": "Website for photo printing, copying and document services",
   "main": "server.js",
   "scripts": {
+    "build:assets": "node tools/build-assets.js",
+    "prestart": "npm run build:assets",
     "start": "node server.js",
+    "predev": "npm run build:assets",
     "dev": "nodemon server.js",
     "seed": "node seeds/seed.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "pretest": "npm run build:assets",
     "test": "node --test \"tests/**/*.test.js\""
   },
   "dependencies": {

@@ -92,12 +92,26 @@ npm start
 | ---------------------- | --------------------------------------------------------------- |
 | `npm start`            | Запуск сервера (`node server.js`)                               |
 | `npm run dev`          | Запуск с nodemon                                                |
+| `npm run build:assets` | Хешированные копии CSS/JS/шрифтов в `public/assets`             |
 | `npm run seed`         | Идемпотентное наполнение БД (админ, настройки, услуги, галерея) |
 | `npm run lint`         | Проверка кода ESLint                                            |
 | `npm run lint:fix`     | Автоисправление ESLint                                          |
 | `npm run format`       | Форматирование Prettier                                         |
 | `npm run format:check` | Проверка форматирования                                         |
 | `npm test`             | Тесты (node:test + supertest)                                   |
+
+## Статика и кеширование
+
+CSS, JS и шрифты отдаются по путям вида `/assets/css/site.<hash>.css`: `npm run build:assets`
+кладёт копии с 8-символьным хешем содержимого в `public/assets` (каталог в `.gitignore`) и
+манифест «исходный путь → хешированный». Шаблоны получают адреса через хелпер `asset()`
+(`utils/assets.js`), ссылки `url()` внутри CSS переписываются на хешированные шрифты. Сборка
+запускается автоматически перед `start`, `dev` и `test`, а на VPS — в `deploy/setup-vps.sh` и
+`deploy/update-vps.sh`; без манифеста шаблоны деградируют до исходных путей.
+
+Хешированные ответы отдаются с `Cache-Control: public, max-age=31536000, immutable`, а nginx
+кеширует `/assets/` на год (`expires 1y`) — имя меняется вместе с содержимым. Остальная статика
+и `/uploads` остаются под прежним часовым TTL.
 
 ## Безопасность
 
@@ -175,6 +189,6 @@ python -m venv .venv-fa && .venv-fa/Scripts/pip install fonttools brotli
 ## Заметки
 
 - Загруженные файлы: `public/uploads/services`, `public/uploads/gallery` (постеры — там же)
-- `data/` и `public/uploads/*` (кроме `.gitkeep`) в `.gitignore` — на новом клоне выполните `npm run seed`
+- `data/`, `public/uploads/*` (кроме `.gitkeep`) и `public/assets/` в `.gitignore` — на новом клоне выполните `npm run seed`
 - `sequelize.sync({ alter: true })` выполняется только при `NODE_ENV=development`; в проде таблицы создаются через `sync()`, а изменения схемы — только через `migrations/`
 - Для видео загружайте постер в форме элемента галереи (авто-генерации превью нет)

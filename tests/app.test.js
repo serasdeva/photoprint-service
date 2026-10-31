@@ -18,6 +18,12 @@ const assert = require('node:assert/strict');
 const request = require('supertest');
 const bcrypt = require('bcryptjs');
 
+const { buildAssets } = require('../tools/build-assets');
+const { asset } = require('../utils/assets');
+
+// Шаблоны берут адреса из манифеста, поэтому сборка нужна и при прямом запуске `node --test`.
+buildAssets();
+
 const { app, startApp } = require('../app');
 const { sequelize, User, Service, GalleryItem, Order } = require('../models');
 const { runMigrations } = require('../config/migrations');
@@ -855,7 +861,7 @@ test('Font Awesome is self-hosted and no CDN is referenced', async () => {
   for (const page of ['/', '/contacts', '/admin/login']) {
     const res = await request(app).get(page);
     assert.equal(res.status, 200);
-    assert.match(res.text, /href="\/vendor\/fontawesome\/icons\.css"/);
+    assert.ok(res.text.includes(`href="${asset('/vendor/fontawesome/icons.css')}"`));
     assert.doesNotMatch(res.text, /cdnjs\.cloudflare\.com/);
     assert.match(res.text, /class="fa-solid fa-print"/);
   }
@@ -887,14 +893,18 @@ test('Manrope is self-hosted and Google Fonts is no longer referenced', async ()
   for (const page of ['/', '/contacts', '/admin/login']) {
     const res = await request(app).get(page);
     assert.equal(res.status, 200);
-    assert.match(res.text, /href="\/vendor\/manrope\/manrope\.css"/);
+    assert.ok(res.text.includes(`href="${asset('/vendor/manrope/manrope.css')}"`));
     assert.doesNotMatch(res.text, /fonts\.googleapis\.com|fonts\.gstatic\.com/);
   }
 
-  const css = await request(app).get('/vendor/manrope/manrope.css');
+  const css = await request(app).get(asset('/vendor/manrope/manrope.css'));
   assert.equal(css.status, 200);
   assert.match(css.text, /font-family: 'Manrope'/);
   assert.match(css.text, /font-weight: 400 800/);
+  assert.ok(
+    css.text.includes(`url("${asset('/vendor/manrope/manrope-cyrillic.woff2')}")`),
+    'font urls inside hashed css must point at hashed files'
+  );
 
   const legacyCss = fs.readFileSync(
     path.join(__dirname, '..', 'public', 'css', 'style.css'),
@@ -905,6 +915,67 @@ test('Manrope is self-hosted and Google Fonts is no longer referenced', async ()
   const csp = (await request(app).get('/')).headers['content-security-policy'] || '';
   assert.doesNotMatch(csp, /fonts\.googleapis\.com|fonts\.gstatic\.com/);
   assert.match(csp, /font-src 'self'/);
+});
+
+test('static assets use hashed names and a one-year immutable cache', async () => {
+  const manifestFile = path.join(__dirname, '..', 'public', 'assets', 'manifest.json');
+  assert.ok(fs.existsSync(manifestFile), 'npm test must build the asset manifest');
+  const manifest = JSON.parse(fs.readFileSync(manifestFile, 'utf8'));
+  assert.ok(Object.keys(manifest).length >= 10, 'all css/js/vendor assets must be hashed');
+
+  const sources = [
+    '/css/site.css',
+    '/js/main.js',
+    '/vendor/manrope/manrope.css',
+    '/vendor/fontawesome/icons.css',
+    '/favicon.svg',
+  ];
+  for (const source of sources) {
+    const hashedUrl = manifest[source];
+    assert.match(
+      hashedUrl,
+      /^\/assets\/.+\.[0-9a-f]{8}\.(css|js|svg|woff2)$/,
+      `${source} must map to a hashed copy`
+    );
+
+    const res = await request(app).get(hashedUrl);
+    assert.equal(res.status, 200, `${hashedUrl} must be served`);
+    assert.match(res.headers['cache-control'], /public/);
+    assert.match(res.headers['cache-control'], /max-age=31536000/);
+    assert.match(res.headers['cache-control'], /immutable/);
+
+    const served = Buffer.isBuffer(res.body) ? res.body : Buffer.from(res.text || '');
+    assert.deepEqual(
+      served,
+      fs.readFileSync(path.join(__dirname, '..', 'public', hashedUrl.slice(1))),
+      `${hashedUrl} must serve the built copy`
+    );
+  }
+
+  for (const page of ['/', '/admin/login']) {
+    const res = await request(app).get(page);
+    assert.equal(res.status, 200);
+    const assetUrls = [...res.text.matchAll(/(?:href|src)="(\/[^"]+\.(?:css|js|svg|woff2))"/g)].map(
+      (match) => match[1]
+    );
+    assert.ok(assetUrls.length >= 6, `${page} must reference hashed assets`);
+    for (const url of assetUrls) {
+      // Картинки работ и загрузки живут в БД/каталоге uploads — это контент, а не сборка.
+      if (url.startsWith('/gallery-placeholders/') || url.startsWith('/uploads/')) {
+        continue;
+      }
+      assert.match(
+        url,
+        /^\/assets\/.+\.[0-9a-f]{8}\.(css|js|svg|woff2)$/,
+        `${page} references ${url} without a hash`
+      );
+    }
+  }
+
+  const nginx = fs.readFileSync(path.join(__dirname, '..', 'deploy', 'nginx.conf.example'), 'utf8');
+  assert.match(nginx, /location \^~ \/assets\//);
+  assert.match(nginx, /expires 1y;/);
+  assert.match(nginx, /immutable/);
 });
 
 test('GET /healthz reports database availability', async () => {

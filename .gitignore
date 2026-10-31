@@ -6,6 +6,7 @@ npm-debug.log*
 .DS_Store
 public/uploads/*
 !public/uploads/.gitkeep
+public/assets/
 *.sqlite
 *.sqlite3
 data/

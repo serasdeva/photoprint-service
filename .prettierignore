@@ -1,6 +1,7 @@
 node_modules
 data
 public/uploads
+public/assets
 public/vendor
 package-lock.json
 *.ejs

@@ -8,6 +8,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const FileSessionStore = require('./utils/fileSessionStore');
+const { asset } = require('./utils/assets');
 const flash = require('connect-flash');
 
 const { sequelize, syncDatabase } = require('./config/db');
@@ -131,12 +132,23 @@ app.use(
     },
   })
 );
-app.use(express.static(path.join(__dirname, 'public')));
+const ASSETS_DIR = path.join(__dirname, 'public', 'assets');
+app.use(
+  express.static(path.join(__dirname, 'public'), {
+    setHeaders(res, filePath) {
+      // Имя файла в /assets меняется вместе с содержимым, поэтому кешируем его на год.
+      if (filePath.startsWith(`${ASSETS_DIR}${path.sep}`)) {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+    },
+  })
+);
 
 app.use(async (req, res, next) => {
   res.locals.flash = req.flash();
   res.locals.user = req.user || null;
   res.locals.currentYear = new Date().getFullYear();
+  res.locals.asset = asset;
 
   const baseUrl = (process.env.BASE_URL || '').replace(/\/+$/, '');
   const origin = baseUrl || `${req.protocol}://${req.get('host')}`;

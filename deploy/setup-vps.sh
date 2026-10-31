@@ -108,6 +108,9 @@ fi
 printf 'Installing Node dependencies...\n'
 runuser -u "$APP_USER" -- npm --prefix "$APP_DIR" ci --omit=dev
 
+printf 'Building hashed static assets...\n'
+runuser -u "$APP_USER" -- npm --prefix "$APP_DIR" run build:assets
+
 if [[ ! -f "$APP_DIR/data/photoprint.sqlite" ]]; then
   printf 'Initializing database and demo content...\n'
   runuser -u "$APP_USER" -- npm --prefix "$APP_DIR" run seed
@@ -146,6 +149,17 @@ server {
     gzip_proxied any;
     gzip_vary on;
     gzip_types text/plain text/css application/javascript application/json application/xml image/svg+xml;
+
+    location ^~ /assets/ {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
 
     location ~* \.(css|js|svg|woff2)\$ {
         proxy_pass http://127.0.0.1:3000;

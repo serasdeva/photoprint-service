@@ -30,7 +30,7 @@ Commit and push code changes to `main` from your development machine. On the VPS
 sudo bash /var/www/photoprint-service/deploy/update-vps.sh
 ```
 
-The updater refuses dirty or divergent checkouts, fetches `origin/main`, creates a SQLite online backup and an uploads archive, fast-forward merges only, runs `npm ci --omit=dev`, restarts systemd and checks the configured `BASE_URL`. Backups are stored under `/var/backups/photoprint-service/`.
+The updater refuses dirty or divergent checkouts, fetches `origin/main`, creates a SQLite online backup and an uploads archive, fast-forward merges only, runs `npm ci --omit=dev`, builds hashed static assets (`npm run build:assets`), restarts systemd and checks the configured `BASE_URL`. Backups are stored under `/var/backups/photoprint-service/`.
 
 If the Git remote's default branch is not `main`, invoke it with `BRANCH=branch-name`:
 

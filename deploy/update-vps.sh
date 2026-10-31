@@ -53,6 +53,7 @@ fi
 printf 'Backup created at %s\n' "$BACKUP_DIR"
 runuser -u "$APP_USER" -- git -C "$APP_DIR" merge --ff-only "$REMOTE_COMMIT"
 runuser -u "$APP_USER" -- npm --prefix "$APP_DIR" ci --omit=dev
+runuser -u "$APP_USER" -- npm --prefix "$APP_DIR" run build:assets
 systemctl restart "$SERVICE_NAME"
 systemctl is-active --quiet "$SERVICE_NAME" || {
   journalctl -u "$SERVICE_NAME" -n 80 --no-pager >&2 || true

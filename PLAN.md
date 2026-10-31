@@ -1,6 +1,6 @@
 # План исправлений и улучшений PhotoPrint Service
 
-Статус: все пункты выполнены и проверены (lint, format, 13/13 тестов, smoke)
+Статус: все пункты выполнены и проверены (lint, format, 47/47 тестов, smoke)
 Приоритет выполнения: A → B → C → D → E
 
 ## A. Безопасность
@@ -31,6 +31,7 @@
 - [x] C2. Пагинация заявок в админке — `controllers/admin/orders.js:34`, `views/admin/orders.ejs`
 - [x] C3. sitemap.xml: страницы услуг из БД — `app.js:113-116`
 - [x] C4. `Cache-Control: no-store` для `/admin` — `routes/admin.js`
+- [x] C5. Хешированные имена CSS/JS/шрифтов и кеш на год (`/assets/…`, `immutable`) — `tools/build-assets.js`, `utils/assets.js`, `deploy/nginx.conf.example`
 
 ## D. Качество кода и инфраструктура
 
@@ -60,7 +61,7 @@
 ## Итоги выполнения
 
 - `npm run lint` — 0 ошибок; `npm run format:check` — OK
-- `npm test` — 46/46 (node:test + supertest)
+- `npm test` — 47/47 (node:test + supertest)
 - Smoke на живом сервере: все страницы, CSP, CSRF (формы + API), отзыв JWT, CRUD услуг
 - Найден и исправлен по ходу работы баг: CSRF-проверка не видела `_csrf` в multipart-формах
   (проверка перенесена после multer: `verifyCsrfAfterUpload`), добавлен регрессионный тест

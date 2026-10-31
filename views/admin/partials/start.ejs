@@ -7,19 +7,19 @@
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#17131b" />
     <title><%= title %></title>
     <meta name="robots" content="noindex, nofollow" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="<%= asset('/favicon.svg') %>" type="image/svg+xml" />
 
-    <link rel="preload" href="/vendor/manrope/manrope-cyrillic.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="/vendor/manrope/manrope.css" />
-    <link rel="preload" href="/vendor/fontawesome/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="stylesheet" href="/vendor/fontawesome/icons.css" />
+    <link rel="preload" href="<%= asset('/vendor/manrope/manrope-cyrillic.woff2') %>" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="<%= asset('/vendor/manrope/manrope.css') %>" />
+    <link rel="preload" href="<%= asset('/vendor/fontawesome/webfonts/fa-solid-900.woff2') %>" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="<%= asset('/vendor/fontawesome/icons.css') %>" />
 
-    <link rel="stylesheet" href="/css/tokens.css" />
-    <link rel="stylesheet" href="/css/base.css" />
-    <link rel="stylesheet" href="/css/components.css" />
-    <link rel="stylesheet" href="/css/admin.css" />
+    <link rel="stylesheet" href="<%= asset('/css/tokens.css') %>" />
+    <link rel="stylesheet" href="<%= asset('/css/base.css') %>" />
+    <link rel="stylesheet" href="<%= asset('/css/components.css') %>" />
+    <link rel="stylesheet" href="<%= asset('/css/admin.css') %>" />
 
-    <script src="/js/theme-boot.js"></script>
+    <script src="<%= asset('/js/theme-boot.js') %>"></script>
   </head>
   <body class="admin-body">
     <a class="skip-link" href="#admin-main">К основному содержимому</a>

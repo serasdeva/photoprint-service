@@ -8,6 +8,7 @@ module.exports = [
       '.zwork/**',
       'data/**',
       'public/uploads/**',
+      'public/assets/**',
       'public/gallery-placeholders/**',
       'coverage/**',
     ],
