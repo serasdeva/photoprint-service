@@ -143,7 +143,11 @@ app.use(async (req, res, next) => {
   // canonical без query: страницы поиска (`?q=`) не должны индексироваться как отдельные URL.
   res.locals.canonicalUrl = `${origin}${req.path}`;
   res.locals.noindex = typeof req.query.q === 'string' && req.query.q.trim() !== '';
+  res.locals.origin = origin;
   res.locals.ogImage = `${origin}/og-image.png`;
+  // Габариты известны только для дефолтной карточки; страница услуги подменяет их на null.
+  res.locals.ogImageWidth = 1200;
+  res.locals.ogImageHeight = 630;
 
   const botUsername = String(process.env.BOT_USERNAME || '')
     .replace(/^@/, '')

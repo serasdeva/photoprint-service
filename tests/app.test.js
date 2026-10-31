@@ -630,6 +630,75 @@ test('social preview tags point to a committed 1200x630 raster image', async () 
   assert.ok(fs.statSync(asset).size > 20 * 1024, 'og-image must not be a placeholder');
 });
 
+test('service page uses its own photo for social previews', async () => {
+  const suffix = Date.now();
+  const raster = await Service.create({
+    title: 'Печать на кружке',
+    slug: `og-raster-${suffix}`,
+    description: 'Тестовая услуга',
+    price: 1,
+    priceUnit: 'шт',
+    image: '/uploads/services/mug.png',
+    isActive: true,
+  });
+  // SVG соцсети в превью не показывают, поэтому такая услуга остаётся на дефолтной карточке.
+  const vector = await Service.create({
+    title: 'Без растровой картинки',
+    slug: `og-vector-${suffix}`,
+    description: 'Тестовая услуга',
+    price: 1,
+    priceUnit: 'шт',
+    image: '/uploads/services/service-default.svg',
+    isActive: true,
+  });
+  const traversal = await Service.create({
+    title: 'Обратный путь',
+    slug: `og-traversal-${suffix}`,
+    description: 'Тестовая услуга',
+    price: 1,
+    priceUnit: 'шт',
+    image: '/uploads/services/../../secret.png',
+    isActive: true,
+  });
+
+  try {
+    const res = await request(app).get(`/services/${raster.slug}`);
+    assert.equal(res.status, 200);
+    assert.match(
+      res.text,
+      /property="og:image" content="http:\/\/localhost:3000\/uploads\/services\/mug\.png"/
+    );
+    // Габариты загруженного файла неизвестны, поэтому врать про 1200×630 не будем.
+    assert.doesNotMatch(res.text, /property="og:image:width"/);
+    assert.match(res.text, /property="og:image:alt" content="Печать на кружке"/);
+    assert.match(
+      res.text,
+      /name="twitter:image" content="http:\/\/localhost:3000\/uploads\/services\/mug\.png"/
+    );
+
+    const fallback = await request(app).get(`/services/${vector.slug}`);
+    assert.equal(fallback.status, 200);
+    assert.match(
+      fallback.text,
+      /property="og:image" content="http:\/\/localhost:3000\/og-image\.png"/
+    );
+    assert.match(fallback.text, /property="og:image:width" content="1200"/);
+
+    // `..` в поле картинки не должен превращать og:image в ссылку на чужой путь.
+    const sneaky = await request(app).get(`/services/${traversal.slug}`);
+    assert.equal(sneaky.status, 200);
+    assert.match(
+      sneaky.text,
+      /property="og:image" content="http:\/\/localhost:3000\/og-image\.png"/
+    );
+    assert.doesNotMatch(sneaky.text, /og:image" content="[^"]*secret/);
+  } finally {
+    await raster.destroy();
+    await vector.destroy();
+    await traversal.destroy();
+  }
+});
+
 test('Font Awesome is self-hosted and no CDN is referenced', async () => {
   const vendor = path.join(__dirname, '..', 'public', 'vendor', 'fontawesome');
   assert.ok(fs.existsSync(path.join(vendor, 'icons.css')), 'icons.css must be built and committed');

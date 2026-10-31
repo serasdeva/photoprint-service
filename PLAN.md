@@ -41,7 +41,7 @@
 
 - [x] E1. Пагинация/ленивая загрузка галереи (счётчик фильтра уже есть) — `views/gallery.ejs`, `public/js/gallery.js`
 - [x] E2. Постер-превью для видео вместо пустого placeholder — `utils/thumbnail.js`, `controllers/galleryController.js`, `views/admin/gallery-form.ejs`
-- [x] E3. canonical + og:image/og:url на публичных страницах — `views/partials/header.ejs`
+- [x] E3. canonical + og:image/og:url на публичных страницах — `views/partials/header.ejs`, у страницы услуги свой `og:image` — `utils/ogImage.js`, `controllers/serviceController.js:32`
 - [x] E4. Индикатор отправки формы + honeypot — `public/js/main.js`, `views/partials/header.ejs`
 - [x] E5. Страница политики конфиденциальности + ссылка в форме
 

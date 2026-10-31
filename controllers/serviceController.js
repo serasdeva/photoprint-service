@@ -1,6 +1,7 @@
 const { Op } = require('sequelize');
 const { Service } = require('../models');
 const { makeSlug } = require('../utils/slugify');
+const { publicOgImageUrl } = require('../utils/ogImage');
 const { safeDeleteUpload } = require('../utils/uploads');
 
 async function listPublicServices(req, res) {
@@ -35,6 +36,14 @@ async function showSingleService(req, res) {
 
   if (!service) {
     return res.status(404).render('404', { title: 'Услуга не найдена' });
+  }
+
+  const serviceOgImage = publicOgImageUrl(res.locals.origin, service.image);
+  if (serviceOgImage) {
+    res.locals.ogImage = serviceOgImage;
+    res.locals.ogImageWidth = null;
+    res.locals.ogImageHeight = null;
+    res.locals.ogImageAlt = service.title;
   }
 
   return res.render('service-single', {

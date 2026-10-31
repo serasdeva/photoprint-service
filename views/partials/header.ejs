@@ -6,6 +6,11 @@
   var metaDescription = (typeof description !== 'undefined' && description)
     ? description
     : 'Печать фотографий, копирование документов, оформление документов и набор текста — быстро и по доступной цене.';
+  var ogWidth = (typeof ogImageWidth !== 'undefined') ? ogImageWidth : null;
+  var ogHeight = (typeof ogImageHeight !== 'undefined') ? ogImageHeight : null;
+  var ogAlt = (typeof ogImageAlt !== 'undefined' && ogImageAlt)
+    ? ogImageAlt
+    : siteName + ' — печать фото и документов';
 %>
 <!DOCTYPE html>
 <html lang="ru">
@@ -24,9 +29,11 @@
     <meta property="og:locale" content="ru_RU" />
     <meta property="og:url" content="<%= canonicalUrl %>" />
     <meta property="og:image" content="<%= ogImage %>" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="<%= siteName %> — печать фото и документов" />
+    <% if (ogWidth && ogHeight) { %>
+      <meta property="og:image:width" content="<%= ogWidth %>" />
+      <meta property="og:image:height" content="<%= ogHeight %>" />
+    <% } %>
+    <meta property="og:image:alt" content="<%= ogAlt %>" />
     <meta property="og:title" content="<%= title || siteName %>" />
     <meta property="og:description" content="<%= metaDescription %>" />
     <meta name="twitter:card" content="summary_large_image" />
