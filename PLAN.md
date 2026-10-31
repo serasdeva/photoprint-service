@@ -1,6 +1,6 @@
 # План исправлений и улучшений PhotoPrint Service
 
-Статус: все пункты выполнены и проверены (lint, format, 58/58 тестов, smoke)
+Статус: все пункты выполнены и проверены (lint, format, 59/59 тестов, 11 E2E, smoke)
 Приоритет выполнения: A → B → C → D → E
 
 ## A. Безопасность
@@ -71,7 +71,7 @@
 ## Итоги выполнения
 
 - `npm run lint` — 0 ошибок; `npm run format:check` — OK
-- `npm test` — 58/58 (node:test + supertest), `npm run test:e2e` — 11 сценариев
+- `npm test` — 59/59 (node:test + supertest), `npm run test:e2e` — 11 сценариев
 - Smoke на живом сервере: все страницы, CSP, CSRF (формы + API), отзыв JWT, CRUD услуг
 - Найден и исправлен по ходу работы баг: CSRF-проверка не видела `_csrf` в multipart-формах
   (проверка перенесена после multer: `verifyCsrfAfterUpload`), добавлен регрессионный тест
