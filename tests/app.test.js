@@ -1036,6 +1036,92 @@ test('Font Awesome is self-hosted and no CDN is referenced', async () => {
   assert.doesNotMatch(csp, /cdnjs\.cloudflare\.com/);
 });
 
+test('every Font Awesome icon in markup exists in the local subset with its style', () => {
+  const root = path.join(__dirname, '..');
+  const styleClasses = new Set(['fa-solid', 'fa-regular', 'fa-brands']);
+  const fontFileTokens = new Set(['fa-solid-900']);
+
+  const collectFiles = (dir) =>
+    fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const target = path.join(dir, entry.name);
+      if (entry.isDirectory()) return collectFiles(target);
+      return /\.(ejs|js)$/.test(entry.name) ? [target] : [];
+    });
+
+  const literals = new Set();
+  const pairs = new Set();
+
+  for (const file of [
+    ...collectFiles(path.join(root, 'views')),
+    ...collectFiles(path.join(root, 'public/js')),
+  ]) {
+    const source = fs.readFileSync(file, 'utf8');
+
+    for (const match of source.matchAll(/(?<![\w-])fa-[a-z0-9-]+\b/g)) {
+      if (styleClasses.has(match[0]) || fontFileTokens.has(match[0])) continue;
+      literals.add(match[0].slice(3));
+    }
+
+    for (const classValue of source.matchAll(
+      /(?:class|className)\s*=\s*["'`]([^"'`]*fa-[^"'`]*)["'`]/g
+    )) {
+      const tokens = classValue[1].split(/\s+/);
+      const styleToken = tokens.find((token) => styleClasses.has(token));
+      if (!styleToken) continue;
+
+      tokens
+        .filter((token) => /^fa-[a-z0-9-]+$/.test(token) && !styleClasses.has(token))
+        .forEach((token) => pairs.add(`${styleToken.slice(3)} ${token.slice(3)}`));
+    }
+  }
+
+  const iconsCss = fs.readFileSync(path.join(root, 'public/vendor/fontawesome/icons.css'), 'utf8');
+  const cssIcons = new Set([...iconsCss.matchAll(/\.fa-([a-z0-9-]+):before/g)].map((m) => m[1]));
+  const missing = [...literals].filter((name) => !cssIcons.has(name)).sort();
+  assert.deepEqual(missing, [], `иконок нет в icons.css: ${missing.join(', ')}`);
+
+  // Семейство иконки в CSS не записано, поэтому сверяем со входом сборщика:
+  // он сам проверяет по cmap шрифта, что каждый запрошенный глиф там есть.
+  const buildTool = fs.readFileSync(path.join(root, 'tools/build-fontawesome.py'), 'utf8');
+  const iconsInStyle = (style) => {
+    const names = new Set();
+
+    for (const dictName of ['USED_IN_APP', 'EXTRAS']) {
+      const dictStart = buildTool.indexOf(`${dictName} = {`);
+      assert.notEqual(dictStart, -1, `${dictName} не найден в tools/build-fontawesome.py`);
+      const dictEnd = buildTool.indexOf('\n}', dictStart);
+      const styleList = buildTool
+        .slice(dictStart, dictEnd)
+        .match(new RegExp(`["']${style}["']\\s*:\\s*\\[([\\s\\S]*?)\\]`));
+      assert.ok(styleList, `стиль ${style} не найден в ${dictName}`);
+      [...styleList[1].matchAll(/["']([a-z0-9-]+)["']/g)].forEach((m) => names.add(m[1]));
+    }
+
+    return names;
+  };
+
+  const subset = {
+    solid: iconsInStyle('solid'),
+    regular: iconsInStyle('regular'),
+    brands: iconsInStyle('brands'),
+  };
+  const wrongStyle = [...pairs]
+    .filter((pair) => {
+      const [style, name] = pair.split(' ');
+      return !subset[style].has(name);
+    })
+    .map((pair) => {
+      const [style, name] = pair.split(' ');
+      return `fa-${style} fa-${name}`;
+    })
+    .sort();
+  assert.deepEqual(
+    wrongStyle,
+    [],
+    `иконка не входит в выбранное семейство: ${wrongStyle.join(', ')}`
+  );
+});
+
 test('Manrope is self-hosted and Google Fonts is no longer referenced', async () => {
   const vendor = path.join(__dirname, '..', 'public', 'vendor', 'manrope');
   assert.ok(fs.existsSync(path.join(vendor, 'manrope.css')), 'manrope.css must be committed');
