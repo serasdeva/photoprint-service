@@ -15,6 +15,39 @@ function tokensMatch(a, b) {
   return crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
 }
 
+// Адрес возврата берётся из запроса, поэтому пускаем только локальные пути: `//host` и `/\host`
+// браузер трактует как внешний адрес и увёл бы пользователя на чужой сайт.
+function localPath(value) {
+  if (typeof value !== 'string' || !value.startsWith('/')) {
+    return null;
+  }
+  if (value.startsWith('//') || value.startsWith('/\\')) {
+    return null;
+  }
+  return value;
+}
+
+function redirectTarget(req) {
+  const referrer = req.get('Referrer');
+
+  if (referrer) {
+    try {
+      const url = new URL(referrer);
+      const expectedOrigin = `${req.protocol}://${req.get('host')}`;
+      // Чужой Referer — это след атаки или внешняя ссылка: остаёмся на текущей странице.
+      if (url.origin === expectedOrigin) {
+        return localPath(`${url.pathname}${url.search}`);
+      }
+      return null;
+    } catch {
+      // Относительный Referer: используем, только если он ведёт внутрь сайта.
+      return localPath(referrer);
+    }
+  }
+
+  return null;
+}
+
 function ensureCsrfCookie(req, res, next) {
   const existing = req.cookies[CSRF_COOKIE];
   const token = typeof existing === 'string' && existing.length === 64 ? existing : generateToken();
@@ -43,7 +76,7 @@ function csrfCheck(req, res, next) {
     const acceptsHtml = (req.get('accept') || '').includes('text/html');
     if (acceptsHtml) {
       req.flash('error', 'Недействительный токен формы. Обновите страницу и попробуйте снова.');
-      const fallbackUrl = req.get('Referrer') || req.originalUrl || '/';
+      const fallbackUrl = redirectTarget(req) || localPath(req.originalUrl) || '/';
       return res.redirect(fallbackUrl);
     }
     return res.status(403).json({ success: false, message: 'CSRF token mismatch' });

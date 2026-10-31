@@ -3,13 +3,21 @@ const path = require('path');
 const multer = require('multer');
 const sharp = require('sharp');
 
-const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.mp4']);
+const ALLOWED_EXTENSIONS = new Set(['.jpg', '.png', '.webp', '.mp4']);
 const MIME_TO_EXTENSION = {
   'image/jpeg': '.jpg',
+  'image/jpg': '.jpg',
   'image/png': '.png',
   'image/webp': '.webp',
   'video/mp4': '.mp4',
 };
+
+// Windows и часть камер присылают .jpeg, хотя MIME тот же image/jpeg. Приводим расширение
+// к одной форме, иначе «photo.jpeg» отбивался бы как недопустимый тип файла.
+function normalizedExtension(filename) {
+  const extension = path.extname(String(filename || '')).toLowerCase();
+  return extension === '.jpeg' ? '.jpg' : extension;
+}
 
 function ensureDirectory(dir) {
   fs.mkdirSync(dir, { recursive: true });
@@ -22,7 +30,7 @@ const serviceStorage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename(req, file, cb) {
-    const ext = path.extname(file.originalname).toLowerCase();
+    const ext = normalizedExtension(file.originalname);
     const safeName = `${Date.now()}-${Math.random().toString(16).slice(2)}${ext}`;
     cb(null, safeName);
   },
@@ -34,16 +42,16 @@ const galleryStorage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename(req, file, cb) {
-    const ext = path.extname(file.originalname).toLowerCase();
+    const ext = normalizedExtension(file.originalname);
     const safeName = `${Date.now()}-${Math.random().toString(16).slice(2)}${ext}`;
     cb(null, safeName);
   },
 });
 
-const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
+const IMAGE_EXTENSIONS = new Set(['.jpg', '.png', '.webp']);
 
 function imageFileFilter(req, file, cb) {
-  const extension = path.extname(file.originalname).toLowerCase();
+  const extension = normalizedExtension(file.originalname);
   const expectedExtension = MIME_TO_EXTENSION[file.mimetype];
 
   if (!IMAGE_EXTENSIONS.has(extension) || !expectedExtension || extension !== expectedExtension) {
@@ -61,7 +69,7 @@ function galleryFileFilter(req, file, cb) {
 }
 
 function fileFilter(req, file, cb) {
-  const extension = path.extname(file.originalname).toLowerCase();
+  const extension = normalizedExtension(file.originalname);
   const expectedExtension = MIME_TO_EXTENSION[file.mimetype];
 
   if (!ALLOWED_EXTENSIONS.has(extension) || !expectedExtension || extension !== expectedExtension) {

@@ -325,6 +325,47 @@ test('POST /admin/login without CSRF token does not authenticate', async () => {
   assert.match(loginPage.text, /Недействительный токен формы/, 'CSRF failure flash must render');
 });
 
+test('CSRF failure does not redirect to an external Referer', async () => {
+  const external = await request(app)
+    .post('/admin/settings')
+    .set('Cookie', `csrf_token=${csrfToken}`)
+    .set('Accept', 'text/html')
+    .set('Referer', 'https://evil.example/phish')
+    .type('form')
+    .send({ siteName: 'взлом' });
+
+  assert.equal(external.status, 302);
+  assert.equal(external.headers.location, '/admin/settings', 'external Referer must be ignored');
+
+  const protocolRelative = await request(app)
+    .post('/admin/settings')
+    .set('Cookie', `csrf_token=${csrfToken}`)
+    .set('Accept', 'text/html')
+    .set('Referer', '//evil.example/phish')
+    .type('form')
+    .send({ siteName: 'взлом' });
+
+  assert.equal(
+    protocolRelative.headers.location,
+    '/admin/settings',
+    'protocol-relative Referer must be ignored'
+  );
+});
+
+test('CSRF failure keeps a same-origin Referer page', async () => {
+  const res = await request(app)
+    .post('/admin/settings')
+    .set('Cookie', `csrf_token=${csrfToken}`)
+    .set('Accept', 'text/html')
+    .set('Host', 'example.test')
+    .set('Referer', 'http://example.test/admin/settings?tab=main')
+    .type('form')
+    .send({ siteName: 'взлом' });
+
+  assert.equal(res.status, 302);
+  assert.equal(res.headers.location, '/admin/settings?tab=main');
+});
+
 test('admin login, logout and token revocation flow', async () => {
   const jar = { csrf_token: csrfToken };
 
@@ -1660,5 +1701,63 @@ test('uploaded images are resized to webp and broken files are rejected', async 
     );
     await Service.destroy({ where: { title: [bigTitle, brokenTitle] } });
     await GalleryItem.destroy({ where: { title: posterTitle } });
+  }
+});
+
+test('uploads accept .jpeg extension for services and gallery', async () => {
+  const jar = await loginJar();
+  const serviceTitle = `JPEG услуга ${Date.now()}`;
+  const galleryTitle = `JPEG галерея ${Date.now()}`;
+  const createdFiles = [];
+
+  const jpeg = await sharp({
+    create: { width: 800, height: 600, channels: 3, background: { r: 90, g: 140, b: 60 } },
+  })
+    .jpeg({ quality: 90 })
+    .toBuffer();
+
+  try {
+    const serviceRes = await request(app)
+      .post('/admin/services')
+      .set('Cookie', cookieHeader(jar))
+      .set('Accept', 'text/html')
+      .field('_csrf', csrfToken)
+      .field('title', serviceTitle)
+      .field('price', '10')
+      .field('isActive', 'on')
+      .attach('image', jpeg, { filename: 'photo.jpeg', contentType: 'image/jpeg' });
+
+    assert.equal(
+      serviceRes.headers.location,
+      '/admin/services',
+      '.jpeg must not be rejected as an unknown type'
+    );
+    const service = await Service.findOne({ where: { title: serviceTitle } });
+    assert.ok(service, 'service with .jpeg image must be created');
+    assert.match(service.image, /\.webp$/);
+    createdFiles.push(path.join(__dirname, '..', 'public', service.image.replace(/^\//, '')));
+
+    const galleryRes = await request(app)
+      .post('/admin/gallery')
+      .set('Cookie', cookieHeader(jar))
+      .set('Accept', 'text/html')
+      .field('_csrf', csrfToken)
+      .field('title', galleryTitle)
+      .field('category', 'photo')
+      .attach('media', jpeg, { filename: 'shot.jpeg', contentType: 'image/jpeg' });
+
+    assert.equal(galleryRes.headers.location, '/admin/gallery', '.jpeg media must be accepted');
+    const item = await GalleryItem.findOne({ where: { title: galleryTitle } });
+    assert.ok(item, 'gallery item with .jpeg media must be created');
+    createdFiles.push(path.join(__dirname, '..', 'public', item.url.replace(/^\//, '')));
+
+    createdFiles.forEach((file) => assert.ok(fs.existsSync(file), `файл не найден: ${file}`));
+  } finally {
+    // Буфер уже прочитан в память, поэтому sharp не держит дескриптор и файлы удаляются.
+    createdFiles.forEach((file) =>
+      fs.rmSync(file, { force: true, maxRetries: 5, retryDelay: 100 })
+    );
+    await Service.destroy({ where: { title: serviceTitle } });
+    await GalleryItem.destroy({ where: { title: galleryTitle } });
   }
 });
