@@ -22,6 +22,8 @@
 - [x] B3. Лимит итераций в `resolveUniqueSlug` — `controllers/serviceController.js:50`
 - [x] B4. `POST /api/orders` возвращает только `{ success, message }` — `controllers/orderController.js:33-37`
 - [x] B5. Составной индекс заявок `(status, createdAt)` вместо одиночного `status` — `migrations/0002-orders-status-created-at.js`, `models/Order.js`
+- [x] B6. Составной индекс «Мои заявки» `(telegramChatId, createdAt)` вместо одиночного `telegramChatId` — `migrations/0003-orders-telegram-chat-created-at.js`, `models/Order.js`
+- [x] B7. Отдельный лимит постера 8 МБ и тесты загрузки админки — `middleware/upload.js`, `routes/admin.js`, `tests/app.test.js`
 
 ## C. Производительность
 
@@ -45,6 +47,7 @@
 - [x] E3. canonical + og:image/og:url на публичных страницах — `views/partials/header.ejs`, у страницы услуги свой `og:image` — `utils/ogImage.js`, `controllers/serviceController.js:32`
 - [x] E4. Индикатор отправки формы + honeypot — `public/js/main.js`, `views/partials/header.ejs`
 - [x] E5. Страница политики конфиденциальности + ссылка в форме
+- [x] E6. `theme-color` под светлую и тёмную тему сайта и админки — `views/partials/header.ejs`, `views/admin/partials/start.ejs`, `public/js/theme.js`
 
 ## Критерии готовности
 
@@ -56,7 +59,7 @@
 ## Итоги выполнения
 
 - `npm run lint` — 0 ошибок; `npm run format:check` — OK
-- `npm test` — 13/13 (node:test + supertest)
+- `npm test` — 45/45 (node:test + supertest)
 - Smoke на живом сервере: все страницы, CSP, CSRF (формы + API), отзыв JWT, CRUD услуг
 - Найден и исправлен по ходу работы баг: CSRF-проверка не видела `_csrf` в multipart-формах
   (проверка перенесена после multer: `verifyCsrfAfterUpload`), добавлен регрессионный тест

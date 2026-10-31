@@ -19,7 +19,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title><%= title || siteName %></title>
     <meta name="description" content="<%= metaDescription %>" />
-    <meta name="theme-color" content="#2563eb" />
+    <!-- Цвет бара совпадает с фоном страницы; JS (theme.js) уточняет его под выбранную тему. -->
+    <meta name="theme-color" content="#faf7f2" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#171513" />
     <link rel="canonical" href="<%= canonicalUrl %>" />
     <% if (typeof noindex !== 'undefined' && noindex) { %>
       <meta name="robots" content="noindex, follow" />

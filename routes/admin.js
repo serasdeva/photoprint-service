@@ -6,7 +6,12 @@ const asyncHandler = require('../utils/asyncHandler');
 const { requireAuth } = require('../middleware/auth');
 const { verifyCsrfAfterUpload } = require('../middleware/csrf');
 const { saveAdminFormDraft } = require('../utils/adminFormDraft');
-const { uploadServiceImage, uploadGalleryMedia } = require('../middleware/upload');
+const {
+  uploadServiceImage,
+  uploadGalleryMedia,
+  POSTER_MAX_BYTES,
+  posterWithinLimit,
+} = require('../middleware/upload');
 const { loginPage, loginUser, logoutUser } = require('../controllers/authController');
 const {
   renderDashboard,
@@ -47,6 +52,15 @@ const authLimiter = rateLimit({
   },
 });
 
+function failUpload(req, res, message) {
+  const section = req.path.startsWith('/gallery') ? 'gallery' : 'services';
+  saveAdminFormDraft(req, section, req.params.id);
+  req.flash('error', message);
+  return res.redirect(
+    req.params.id ? `/admin/${section}/${req.params.id}/edit` : `/admin/${section}/new`
+  );
+}
+
 function handleUpload(uploadMiddleware) {
   return (req, res, next) => {
     uploadMiddleware(req, res, (err) => {
@@ -54,15 +68,23 @@ function handleUpload(uploadMiddleware) {
         return next();
       }
 
-      const message = err.message || 'Ошибка загрузки файла';
-      const section = req.path.startsWith('/gallery') ? 'gallery' : 'services';
-      saveAdminFormDraft(req, section, req.params.id);
-      req.flash('error', message);
-      return res.redirect(
-        req.params.id ? `/admin/${section}/${req.params.id}/edit` : `/admin/${section}/new`
-      );
+      return failUpload(req, res, err.message || 'Ошибка загрузки файла');
     });
   };
+}
+
+function rejectOversizedPoster(req, res, next) {
+  if (posterWithinLimit(req)) {
+    return next();
+  }
+
+  // multer уже записал файлы на диск, поэтому их нужно убрать.
+  discardUploadedFile(req);
+  return failUpload(
+    req,
+    res,
+    `Постер больше ${POSTER_MAX_BYTES / (1024 * 1024)} МБ — уменьшите картинку.`
+  );
 }
 
 function discardUploadedFile(req) {
@@ -203,6 +225,7 @@ router.get('/gallery/:id/edit', asyncHandler(renderGalleryForm));
 router.post(
   '/gallery',
   handleUpload(uploadGalleryMediaFields),
+  rejectOversizedPoster,
   verifyCsrfAfterUpload,
   validate(galleryRules),
   asyncHandler(saveGallery)
@@ -210,6 +233,7 @@ router.post(
 router.post(
   '/gallery/:id',
   handleUpload(uploadGalleryMediaFields),
+  rejectOversizedPoster,
   verifyCsrfAfterUpload,
   validate(galleryRules),
   asyncHandler(saveGallery)

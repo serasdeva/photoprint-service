@@ -55,13 +55,17 @@ const Order = sequelize.define(
   {
     timestamps: true,
     tableName: 'Orders',
-    // Дублируются миграциями 0001 и 0002: sync() нужен для свежих баз и development,
+    // Дублируются миграциями 0001–0003: sync() нужен для свежих баз и development,
     // миграция — для уже существующих баз в продакшене.
     indexes: [
       // Один индекс на (status, createdAt): он же закрывает фильтр только по status.
       { name: 'orders_status_created_at_idx', fields: ['status', 'createdAt'] },
       { name: 'orders_created_at_idx', fields: ['createdAt'] },
-      { name: 'orders_telegram_chat_id_idx', fields: ['telegramChatId'] },
+      // «Мои заявки» бота: фильтр по chat id плюс сортировка по дате без временной B-tree.
+      {
+        name: 'orders_telegram_chat_created_at_idx',
+        fields: ['telegramChatId', 'createdAt'],
+      },
     ],
   }
 );

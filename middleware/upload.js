@@ -82,4 +82,12 @@ const uploadGalleryMedia = multer({
   limits: { fileSize: 25 * 1024 * 1024 },
 });
 
-module.exports = { uploadServiceImage, uploadGalleryMedia };
+// multer задаёт один лимит на весь запрос, а постер — обычная картинка: 25 МБ ему не нужны.
+const POSTER_MAX_BYTES = 8 * 1024 * 1024;
+
+function posterWithinLimit(req) {
+  const poster = req.files && req.files.poster && req.files.poster[0];
+  return !poster || poster.size <= POSTER_MAX_BYTES;
+}
+
+module.exports = { uploadServiceImage, uploadGalleryMedia, POSTER_MAX_BYTES, posterWithinLimit };

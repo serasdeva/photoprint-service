@@ -121,6 +121,22 @@ test('GET / returns 200 with CSP header', async () => {
   assert.match(csp, /script-src 'self'/);
 });
 
+test('theme-color matches the light and dark palette on public and admin pages', async () => {
+  const [home, login, themeJs] = await Promise.all([
+    request(app).get('/'),
+    request(app).get('/admin/login'),
+    request(app).get('/js/theme.js'),
+  ]);
+
+  assert.equal(login.status, 200);
+  assert.match(home.text, /<meta name="theme-color" content="#faf7f2" \/>/);
+  assert.match(home.text, /media="\(prefers-color-scheme: dark\)" content="#171513"/);
+  assert.match(login.text, /<meta name="theme-color" content="#f7f4f8" \/>/);
+  assert.match(login.text, /media="\(prefers-color-scheme: dark\)" content="#17131b"/);
+  // Медиазапросы не знают о ручном переключателе, поэтому JS подменяет цвет на текущий.
+  assert.match(themeJs.text, /removeAttribute\('media'\)/);
+});
+
 test('GET /contacts renders the responsive order form', async () => {
   const res = await request(app).get('/contacts');
   assert.equal(res.status, 200);
@@ -422,6 +438,136 @@ test('multipart admin form requires CSRF token (regression)', async () => {
   const created = await Service.findOne({ where: { title } });
   assert.ok(created, 'service must be created with valid CSRF token');
   await created.destroy();
+});
+
+test('admin uploads files, rejects wrong types and oversized posters', async () => {
+  const jar = await loginJar();
+  const uploadsRoot = path.join(__dirname, '..', 'public');
+  const diskPath = (url) => path.join(uploadsRoot, url.replace(/^\//, ''));
+  const createdFiles = [];
+  const serviceTitle = `Услуга с картинкой ${Date.now()}`;
+  const badServiceTitle = `Услуга с svg ${Date.now()}`;
+  const galleryTitle = `Работа с постером ${Date.now()}`;
+  const bigTitle = `Постер слишком большой ${Date.now()}`;
+  const badTitle = `Плохой тип ${Date.now()}`;
+  // Настоящий PNG 1×1: фильтр проверяет расширение и MIME, но валидный файл честнее.
+  const PNG_1X1 = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    'base64'
+  );
+
+  try {
+    const serviceRes = await request(app)
+      .post('/admin/services')
+      .set('Cookie', cookieHeader(jar))
+      .set('Accept', 'text/html')
+      .field('_csrf', csrfToken)
+      .field('title', serviceTitle)
+      .field('description', 'загружено тестом')
+      .field('price', '10')
+      .field('isActive', 'on')
+      .attach('image', PNG_1X1, { filename: 'cup.png', contentType: 'image/png' });
+
+    assert.equal(serviceRes.status, 302);
+    const service = await Service.findOne({ where: { title: serviceTitle } });
+    assert.ok(service, 'service with uploaded image must be created');
+    assert.match(service.image, /^\/uploads\/services\/[\w.-]+\.png$/);
+    createdFiles.push(diskPath(service.image));
+    assert.ok(fs.existsSync(createdFiles.at(-1)), 'uploaded service image must exist on disk');
+
+    const galleryRes = await request(app)
+      .post('/admin/gallery')
+      .set('Cookie', cookieHeader(jar))
+      .set('Accept', 'text/html')
+      .field('_csrf', csrfToken)
+      .field('title', galleryTitle)
+      .field('category', 'photo')
+      .attach('media', Buffer.from('not-a-real-video'), {
+        filename: 'clip.mp4',
+        contentType: 'video/mp4',
+      })
+      .attach('poster', PNG_1X1, { filename: 'poster.png', contentType: 'image/png' });
+
+    assert.equal(galleryRes.status, 302);
+    const item = await GalleryItem.findOne({ where: { title: galleryTitle } });
+    assert.ok(item, 'gallery item with video and poster must be created');
+    assert.equal(item.type, 'video');
+    assert.match(item.url, /^\/uploads\/gallery\/[\w.-]+\.mp4$/);
+    assert.match(item.thumbnail, /^\/uploads\/gallery\/[\w.-]+\.png$/);
+    createdFiles.push(diskPath(item.url), diskPath(item.thumbnail));
+    assert.ok(fs.existsSync(diskPath(item.thumbnail)), 'uploaded poster must exist on disk');
+
+    const badService = await request(app)
+      .post('/admin/services')
+      .set('Cookie', cookieHeader(jar))
+      .set('Accept', 'text/html')
+      .field('_csrf', csrfToken)
+      .field('title', badServiceTitle)
+      .attach('image', Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"></svg>'), {
+        filename: 'icon.svg',
+        contentType: 'image/svg+xml',
+      });
+    assert.equal(badService.status, 302);
+    assert.match(badService.headers.location, /\/admin\/services\/new/);
+    assert.equal(await Service.findOne({ where: { title: badServiceTitle } }), null);
+
+    const wrongType = await request(app)
+      .post('/admin/gallery')
+      .set('Cookie', cookieHeader(jar))
+      .set('Accept', 'text/html')
+      .field('_csrf', csrfToken)
+      .field('title', badTitle)
+      .attach('media', Buffer.from('MZ'), {
+        filename: 'setup.exe',
+        contentType: 'application/octet-stream',
+      });
+    assert.equal(wrongType.status, 302);
+    assert.match(wrongType.headers.location, /\/admin\/gallery\/new/);
+
+    const galleryDir = path.join(uploadsRoot, 'uploads', 'gallery');
+    const filesBefore = fs.readdirSync(galleryDir).sort();
+    const bigPoster = await request(app)
+      .post('/admin/gallery')
+      .set('Cookie', cookieHeader(jar))
+      .set('Accept', 'text/html')
+      .field('_csrf', csrfToken)
+      .field('title', bigTitle)
+      .attach('media', Buffer.from('video-bytes'), {
+        filename: 'big.mp4',
+        contentType: 'video/mp4',
+      })
+      .attach('poster', Buffer.alloc(8 * 1024 * 1024 + 1), {
+        filename: 'big.png',
+        contentType: 'image/png',
+      });
+
+    assert.equal(bigPoster.status, 302);
+    assert.match(bigPoster.headers.location, /\/admin\/gallery\/new/);
+    assert.equal(await GalleryItem.findOne({ where: { title: bigTitle } }), null);
+
+    collectCookies(bigPoster, jar);
+    const form = await request(app).get('/admin/gallery/new').set('Cookie', cookieHeader(jar));
+    assert.match(form.text, /Постер больше 8 МБ/);
+
+    // Отклонённые файлы удаляются асинхронно, поэтому дожидаемся очистки каталога.
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      if (fs.readdirSync(galleryDir).sort().join('|') === filesBefore.join('|')) {
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    assert.deepEqual(
+      fs.readdirSync(galleryDir).sort(),
+      filesBefore,
+      'rejected poster and video must be removed from disk'
+    );
+  } finally {
+    await Service.destroy({ where: { title: [serviceTitle, badServiceTitle] } });
+    await GalleryItem.destroy({
+      where: { title: [galleryTitle, bigTitle, badTitle] },
+    });
+    createdFiles.forEach((file) => fs.rmSync(file, { force: true }));
+  }
 });
 
 test('admin form validation rejects invalid service payload', async () => {
@@ -750,9 +896,16 @@ test('migrations create order indexes and stay idempotent', async () => {
     names.includes('orders_created_at_idx'),
     'createdAt index serves sorting without filters'
   );
-  assert.ok(names.includes('orders_telegram_chat_id_idx'), 'chat id index serves «Мои заявки»');
-  // Одиночный индекс по status полностью покрывается префиксом составного.
+  assert.ok(
+    names.includes('orders_telegram_chat_created_at_idx'),
+    'composite chat id index serves «Мои заявки» with sorting'
+  );
+  // Одиночные индексы по status и chat id покрыты префиксами составных.
   assert.ok(!names.includes('orders_status_idx'), 'redundant status-only index must be dropped');
+  assert.ok(
+    !names.includes('orders_telegram_chat_id_idx'),
+    'redundant chat-only index must be dropped'
+  );
 
   // Смысл составного индекса — в отказе от временной сортировки, поэтому проверяем план запроса.
   const [plan] = await sequelize.query(
@@ -761,6 +914,21 @@ test('migrations create order indexes and stay idempotent', async () => {
   const details = plan.map((row) => row.detail).join(' | ');
   assert.match(details, /orders_status_created_at_idx/, `planner ignored the index: ${details}`);
   assert.doesNotMatch(details, /TEMP B-TREE/, `sorting still builds a temp B-tree: ${details}`);
+
+  const [myOrdersPlan] = await sequelize.query(
+    "EXPLAIN QUERY PLAN SELECT * FROM Orders WHERE telegramChatId = '42' ORDER BY createdAt DESC LIMIT 10"
+  );
+  const myOrdersDetails = myOrdersPlan.map((row) => row.detail).join(' | ');
+  assert.match(
+    myOrdersDetails,
+    /orders_telegram_chat_created_at_idx/,
+    `planner ignored the chat index: ${myOrdersDetails}`
+  );
+  assert.doesNotMatch(
+    myOrdersDetails,
+    /TEMP B-TREE/,
+    `«Мои заявки» still builds a temp B-tree: ${myOrdersDetails}`
+  );
 
   const appliedAgain = await runMigrations({
     sequelize,
