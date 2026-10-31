@@ -742,6 +742,10 @@
     width: 100%;
   }
 
+  .orders-toolbar label {
+    width: 100%;
+  }
+
   .admin-list-count {
     margin-left: 0;
   }
@@ -772,6 +776,73 @@
   flex: 1 1 220px;
   min-width: 180px;
   width: 100%;
+}
+
+.orders-toolbar label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--text-3, #8a94a6);
+}
+
+.orders-toolbar input[type='date'] {
+  min-width: 150px;
+}
+
+.order-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.order-link:hover {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ---------- Order detail ---------- */
+
+.order-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.order-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem 1.5rem;
+  margin: 0;
+}
+
+.order-fields dt {
+  font-size: 0.8rem;
+  color: var(--text-3, #8a94a6);
+}
+
+.order-fields dd {
+  margin: 0.2rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.order-section-title {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.order-message {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.order-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
 }
 
 /* ---------- Topbar user ---------- */

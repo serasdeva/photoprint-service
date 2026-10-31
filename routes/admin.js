@@ -24,6 +24,7 @@ const {
   saveGallery,
   deleteGallery,
   renderOrdersPage,
+  renderOrderPage,
   exportOrdersCsv,
   updateOrderStatus,
   deleteOrder,
@@ -243,6 +244,8 @@ router.post('/gallery/:id/delete', asyncHandler(deleteGallery));
 router.get('/orders', asyncHandler(renderOrdersPage));
 // GET-маршрут без тела: CSRF не нужен, доступ закрывает requireAuth выше.
 router.get('/orders/export', asyncHandler(exportOrdersCsv));
+// Ниже /orders/export, иначе Express принял бы «export» за id заявки.
+router.get('/orders/:id', asyncHandler(renderOrderPage));
 router.post('/orders/:id/status', asyncHandler(updateOrderStatus));
 router.patch('/orders/:id/status', asyncHandler(updateOrderStatus));
 router.post('/orders/:id/delete', asyncHandler(deleteOrder));

@@ -1,0 +1,95 @@
+<%- include('./partials/start') %>
+<%- include('./partials/topbar') %>
+
+  <div class="page-header">
+    <div>
+      <h1>Заявка #<%= order.id %></h1>
+      <p class="page-sub">
+        <%= new Date(order.createdAt).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %>
+        · <%= order.source === 'telegram' ? 'Telegram-бот' : 'Сайт' %>
+      </p>
+    </div>
+    <a class="btn btn-secondary" href="/admin/orders">
+      <i class="fa-solid fa-arrow-left"></i> К списку
+    </a>
+  </div>
+
+  <div class="admin-card">
+    <div class="order-detail">
+      <div class="status-cell">
+        <% if (order.status === 'new') { %>
+          <span class="badge badge-new">Новая</span>
+        <% } else if (order.status === 'in_progress') { %>
+          <span class="badge badge-progress">В работе</span>
+        <% } else { %>
+          <span class="badge badge-done">Выполнена</span>
+        <% } %>
+        <form method="POST" action="/admin/orders/<%= order.id %>/status">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+          <input type="hidden" name="returnTo" value="/admin/orders/<%= order.id %>" />
+          <select name="status" aria-label="Статус заявки">
+            <option value="new" <%= order.status === 'new' ? 'selected' : '' %>>Новая</option>
+            <option value="in_progress" <%= order.status === 'in_progress' ? 'selected' : '' %>>В работе</option>
+            <option value="done" <%= order.status === 'done' ? 'selected' : '' %>>Выполнена</option>
+          </select>
+          <button type="submit" class="btn btn-secondary btn-sm">Сохранить</button>
+        </form>
+      </div>
+
+      <dl class="order-fields">
+        <div>
+          <dt>Клиент</dt>
+          <dd><%= order.name %></dd>
+        </div>
+        <div>
+          <dt>Телефон</dt>
+          <dd>
+            <a class="admin-contact-link" href="tel:<%= String(order.phone || '').replace(/[^\d+]/g, '') %>"><%= order.phone %></a>
+          </dd>
+        </div>
+        <div>
+          <dt>Email</dt>
+          <dd>
+            <% if (order.email) { %>
+              <a class="admin-contact-link" href="mailto:<%= order.email %>"><%= order.email %></a>
+            <% } else { %>
+              —
+            <% } %>
+          </dd>
+        </div>
+        <div>
+          <dt>Услуга</dt>
+          <dd><%= order.service || '—' %></dd>
+        </div>
+        <div>
+          <dt>Источник</dt>
+          <dd><%= order.source === 'telegram' ? 'Telegram-бот' : 'Сайт' %></dd>
+        </div>
+        <% if (order.telegramChatId) { %>
+          <div>
+            <dt>Telegram chat id</dt>
+            <dd><%= order.telegramChatId %></dd>
+          </div>
+        <% } %>
+      </dl>
+
+      <div>
+        <h2 class="order-section-title">Сообщение</h2>
+        <p class="order-message"><%= order.message || '—' %></p>
+      </div>
+
+      <div class="order-actions">
+        <a class="btn btn-secondary" href="/admin/orders">
+          <i class="fa-solid fa-arrow-left"></i> Назад к заявкам
+        </a>
+        <form method="POST" action="/admin/orders/<%= order.id %>/delete" data-confirm="Удалить заявку от «<%= order.name %>?»">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+          <button type="submit" class="btn btn-danger">
+            <i class="fa-regular fa-trash-can"></i> Удалить заявку
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+<%- include('./partials/end') %>

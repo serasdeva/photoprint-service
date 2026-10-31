@@ -1,6 +1,6 @@
 # План исправлений и улучшений PhotoPrint Service
 
-Статус: все пункты выполнены и проверены (lint, format, 47/47 тестов, smoke)
+Статус: все пункты выполнены и проверены (lint, format, 49/49 тестов, smoke)
 Приоритет выполнения: A → B → C → D → E
 
 ## A. Безопасность
@@ -50,6 +50,7 @@
 - [x] E5. Страница политики конфиденциальности + ссылка в форме
 - [x] E6. `theme-color` под светлую и тёмную тему сайта и админки — `views/partials/header.ejs`, `views/admin/partials/start.ejs`, `public/js/theme.js`
 - [x] E7. Manrope на self-host: вариативный woff2 (OFL) в `public/vendor/manrope/`, без Google Fonts в HTML и CSP — `public/vendor/manrope/manrope.css`, `views/partials/header.ejs`, `views/admin/partials/start.ejs`, `app.js`
+- [x] E8. Страница отдельной заявки и фильтр по датам в админке (фильтр дат общий для списка и CSV, `returnTo` после смены статуса с белым списком) — `controllers/admin/orders.js`, `routes/admin.js`, `views/admin/order.ejs`, `views/admin/orders.ejs`
 
 ## Критерии готовности
 
@@ -61,7 +62,7 @@
 ## Итоги выполнения
 
 - `npm run lint` — 0 ошибок; `npm run format:check` — OK
-- `npm test` — 47/47 (node:test + supertest)
+- `npm test` — 49/49 (node:test + supertest)
 - Smoke на живом сервере: все страницы, CSP, CSRF (формы + API), отзыв JWT, CRUD услуг
 - Найден и исправлен по ходу работы баг: CSRF-проверка не видела `_csrf` в multipart-формах
   (проверка перенесена после multer: `verifyCsrfAfterUpload`), добавлен регрессионный тест

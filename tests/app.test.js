@@ -679,6 +679,139 @@ test('admin order search matches Cyrillic regardless of case', async () => {
   }
 });
 
+test('admin orders filter by creation date with inclusive day boundaries', async () => {
+  const jar = await loginJar();
+  const created = await Promise.all([
+    Order.create({
+      name: 'Диапазон Январь',
+      phone: '+7 900 000-00-01',
+      createdAt: new Date(2026, 0, 10, 12, 0),
+    }),
+    Order.create({
+      name: 'Диапазон Февраль',
+      phone: '+7 900 000-00-02',
+      createdAt: new Date(2026, 1, 15, 12, 0),
+    }),
+    Order.create({
+      name: 'Диапазон Март',
+      phone: '+7 900 000-00-03',
+      createdAt: new Date(2026, 2, 5, 12, 0),
+    }),
+  ]);
+
+  const list = (query) =>
+    request(app).get(`/admin/orders?${query}`).set('Cookie', cookieHeader(jar));
+
+  try {
+    const all = await list('q=Диапазон');
+    assert.equal(all.status, 200);
+    for (const order of created) {
+      assert.ok(all.text.includes(order.name), `${order.name} must be in the unfiltered list`);
+    }
+
+    const february = await list('q=Диапазон&from=2026-02-01&to=2026-02-15');
+    assert.ok(february.text.includes('Диапазон Февраль'));
+    assert.ok(!february.text.includes('Диапазон Январь'), 'from must exclude earlier days');
+    assert.ok(!february.text.includes('Диапазон Март'), 'to must exclude later days');
+    assert.match(february.text, /name="from" value="2026-02-01"/);
+    assert.match(february.text, /name="to" value="2026-02-15"/);
+    assert.match(
+      february.text,
+      /href="\/admin\/orders\/export\?[^"]*from=2026-02-01[^"]*to=2026-02-15/,
+      'CSV export must keep the date filters'
+    );
+
+    const singleDay = await list('q=Диапазон&from=2026-02-15&to=2026-02-15');
+    assert.ok(singleDay.text.includes('Диапазон Февраль'), 'both bounds include the whole day');
+    assert.ok(!singleDay.text.includes('Диапазон Январь'));
+    assert.ok(!singleDay.text.includes('Диапазон Март'));
+
+    const invalid = await list('q=Диапазон&from=2026-02-31&to=abc');
+    for (const order of created) {
+      assert.ok(invalid.text.includes(order.name), 'invalid dates are ignored, not fatal');
+    }
+    assert.doesNotMatch(invalid.text, /value="2026-02-31"/);
+
+    const swapped = await list('q=Диапазон&from=2026-03-01&to=2026-02-01');
+    assert.ok(swapped.text.includes('Диапазон Февраль'), 'reversed bounds are swapped');
+    assert.ok(!swapped.text.includes('Диапазон Март'));
+    assert.match(swapped.text, /name="from" value="2026-02-01"/);
+    assert.match(swapped.text, /name="to" value="2026-03-01"/);
+
+    const exported = await request(app)
+      .get('/admin/orders/export?q=Диапазон&from=2026-02-01&to=2026-02-15')
+      .set('Cookie', cookieHeader(jar));
+    assert.equal(exported.status, 200);
+    assert.ok(exported.text.includes('Диапазон Февраль'));
+    assert.ok(!exported.text.includes('Диапазон Январь'));
+    assert.ok(!exported.text.includes('Диапазон Март'));
+  } finally {
+    await Promise.all(created.map((order) => order.destroy()));
+  }
+});
+
+test('admin order page shows the full order and returns there after a status change', async () => {
+  const order = await Order.create({
+    name: 'Подробная заявка',
+    phone: '+7 900 777-88-99',
+    email: 'detail@example.com',
+    service: 'Сканирование',
+    message: 'Строка один\nСтрока два',
+    source: 'telegram',
+    telegramChatId: '123456789',
+  });
+  const jar = await loginJar();
+
+  try {
+    const missing = await request(app).get('/admin/orders/999999').set('Cookie', cookieHeader(jar));
+    assert.equal(missing.status, 302);
+    assert.equal(missing.headers.location, '/admin/orders');
+
+    const page = await request(app)
+      .get(`/admin/orders/${order.id}`)
+      .set('Cookie', cookieHeader(jar));
+    assert.equal(page.status, 200);
+    assert.match(page.text, new RegExp(`Заявка #${order.id}`));
+    assert.match(page.text, /Подробная заявка/);
+    assert.match(page.text, /href="tel:\+79007778899"/);
+    assert.match(page.text, /href="mailto:detail@example\.com"/);
+    assert.match(page.text, /Сканирование/);
+    assert.ok(page.text.includes('Строка один\nСтрока два'), 'message keeps its line breaks');
+    assert.match(page.text, /Telegram-бот/);
+    assert.match(page.text, /123456789/);
+    assert.match(page.text, new RegExp(`/admin/orders/${order.id}/status`));
+    assert.match(
+      page.text,
+      new RegExp(`name="returnTo" value="/admin/orders/${order.id}"`),
+      'status form must bring the admin back to the detail page'
+    );
+    assert.match(page.text, new RegExp(`/admin/orders/${order.id}/delete`));
+
+    const updated = await request(app)
+      .post(`/admin/orders/${order.id}/status`)
+      .set('Cookie', cookieHeader(jar))
+      .type('form')
+      .send({ _csrf: csrfToken, status: 'done', returnTo: `/admin/orders/${order.id}` });
+    assert.equal(updated.status, 302);
+    assert.equal(updated.headers.location, `/admin/orders/${order.id}`);
+    assert.equal((await order.reload()).status, 'done');
+
+    const after = await request(app)
+      .get(`/admin/orders/${order.id}`)
+      .set('Cookie', cookieHeader(jar));
+    assert.match(after.text, /badge-done/);
+
+    const spoofed = await request(app)
+      .post(`/admin/orders/${order.id}/status`)
+      .set('Cookie', cookieHeader(jar))
+      .type('form')
+      .send({ _csrf: csrfToken, status: 'new', returnTo: 'https://evil.example' });
+    assert.equal(spoofed.headers.location, '/admin/orders', 'only local order paths are allowed');
+  } finally {
+    await order.destroy();
+  }
+});
+
 test('admin exports orders to CSV with the same filters as the list', async () => {
   const doneOrder = await Order.create({
     name: 'Иван Смирнов',

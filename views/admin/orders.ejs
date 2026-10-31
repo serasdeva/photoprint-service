@@ -10,9 +10,12 @@
 
   <div class="admin-card">
     <%
+      const hasFilters = filters.status || filters.q || filters.from || filters.to;
       const exportParams = new URLSearchParams();
       if (filters.status) exportParams.set('status', filters.status);
       if (filters.q) exportParams.set('q', filters.q);
+      if (filters.from) exportParams.set('from', filters.from);
+      if (filters.to) exportParams.set('to', filters.to);
       const exportLink = '/admin/orders/export' + (exportParams.toString() ? '?' + exportParams.toString() : '');
     %>
     <form method="GET" action="/admin/orders" class="orders-toolbar">
@@ -22,6 +25,14 @@
         <option value="in_progress" <%= filters.status === 'in_progress' ? 'selected' : '' %>>В работе</option>
         <option value="done" <%= filters.status === 'done' ? 'selected' : '' %>>Выполненные</option>
       </select>
+      <label>
+        С даты
+        <input type="date" name="from" value="<%= filters.from %>" aria-label="Заявки с даты" />
+      </label>
+      <label>
+        По дату
+        <input type="date" name="to" value="<%= filters.to %>" aria-label="Заявки по дату включительно" />
+      </label>
       <input type="search" name="q" value="<%= filters.q %>" placeholder="Поиск: имя, телефон, услуга…" aria-label="Поиск заявок" />
       <button type="submit" class="btn btn-secondary btn-sm">
         <i class="fa-solid fa-magnifying-glass"></i> Найти
@@ -29,7 +40,7 @@
       <a class="btn btn-secondary btn-sm" href="<%= exportLink %>">
         <i class="fa-solid fa-file-arrow-down"></i> Экспорт CSV
       </a>
-      <% if (filters.status || filters.q) { %>
+      <% if (hasFilters) { %>
         <a href="/admin/orders" class="btn btn-ghost btn-sm">Сбросить</a>
       <% } %>
     </form>
@@ -37,9 +48,9 @@
     <% if (!orders.length) { %>
       <div class="empty-state">
         <i class="fa-solid fa-inbox"></i>
-        <h3><%= (filters.status || filters.q) ? 'Ничего не найдено' : 'Заявок пока нет' %></h3>
-        <p><%= (filters.status || filters.q) ? 'Попробуйте изменить параметры поиска.' : 'Как только клиент оставит заявку на сайте, она появится здесь.' %></p>
-        <% if (filters.status || filters.q) { %>
+        <h3><%= hasFilters ? 'Ничего не найдено' : 'Заявок пока нет' %></h3>
+        <p><%= hasFilters ? 'Попробуйте изменить параметры поиска.' : 'Как только клиент оставит заявку на сайте, она появится здесь.' %></p>
+        <% if (hasFilters) { %>
           <a href="/admin/orders" class="btn btn-secondary">Показать все заявки</a>
         <% } else { %>
           <a href="/" class="btn btn-secondary">Открыть сайт</a>
@@ -62,7 +73,7 @@
             <% orders.forEach((order) => { %>
               <tr>
                 <td data-label="Клиент">
-                  <span class="cell-title"><%= order.name %></span>
+                  <a class="cell-title order-link" href="/admin/orders/<%= order.id %>"><%= order.name %></a>
                   <a class="cell-sub admin-contact-link" href="tel:<%= String(order.phone || '').replace(/[^\d+]/g, '') %>"><%= order.phone %></a>
                   <% if (order.email) { %>
                     <a class="cell-sub admin-contact-link" href="mailto:<%= order.email %>"><%= order.email %></a>
@@ -92,6 +103,9 @@
                   </div>
                 </td>
                 <td data-label="Действия">
+                  <a class="btn btn-secondary btn-sm" href="/admin/orders/<%= order.id %>">
+                    <i class="fa-solid fa-eye"></i> Открыть
+                  </a>
                   <form method="POST" action="/admin/orders/<%= order.id %>/delete" style="display: inline;" data-confirm="Удалить заявку от «<%= order.name %>?»">
                     <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
                     <button type="submit" class="btn btn-danger btn-sm">
@@ -111,6 +125,8 @@
             const params = new URLSearchParams();
             if (filters.status) params.set('status', filters.status);
             if (filters.q) params.set('q', filters.q);
+            if (filters.from) params.set('from', filters.from);
+            if (filters.to) params.set('to', filters.to);
             params.set('page', targetPage);
             return '/admin/orders?' + params.toString();
           };
