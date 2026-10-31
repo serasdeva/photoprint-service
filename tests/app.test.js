@@ -742,9 +742,25 @@ test('migrations create order indexes and stay idempotent', async () => {
     "SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'Orders'"
   );
   const names = rows.map((row) => row.name);
-  assert.ok(names.includes('orders_status_idx'), 'status index is required for admin filters');
-  assert.ok(names.includes('orders_created_at_idx'), 'createdAt index is required for sorting');
+  assert.ok(
+    names.includes('orders_status_created_at_idx'),
+    'composite index serves filter by status plus sorting by date'
+  );
+  assert.ok(
+    names.includes('orders_created_at_idx'),
+    'createdAt index serves sorting without filters'
+  );
   assert.ok(names.includes('orders_telegram_chat_id_idx'), 'chat id index serves «Мои заявки»');
+  // Одиночный индекс по status полностью покрывается префиксом составного.
+  assert.ok(!names.includes('orders_status_idx'), 'redundant status-only index must be dropped');
+
+  // Смысл составного индекса — в отказе от временной сортировки, поэтому проверяем план запроса.
+  const [plan] = await sequelize.query(
+    "EXPLAIN QUERY PLAN SELECT * FROM Orders WHERE status = 'new' ORDER BY createdAt DESC LIMIT 5"
+  );
+  const details = plan.map((row) => row.detail).join(' | ');
+  assert.match(details, /orders_status_created_at_idx/, `planner ignored the index: ${details}`);
+  assert.doesNotMatch(details, /TEMP B-TREE/, `sorting still builds a temp B-tree: ${details}`);
 
   const appliedAgain = await runMigrations({
     sequelize,

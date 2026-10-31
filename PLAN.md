@@ -21,6 +21,7 @@
 - [x] B2. Express-validator для услуг/галереи — `routes/admin.js`, `controllers/serviceController.js`, `controllers/galleryController.js`
 - [x] B3. Лимит итераций в `resolveUniqueSlug` — `controllers/serviceController.js:50`
 - [x] B4. `POST /api/orders` возвращает только `{ success, message }` — `controllers/orderController.js:33-37`
+- [x] B5. Составной индекс заявок `(status, createdAt)` вместо одиночного `status` — `migrations/0002-orders-status-created-at.js`, `models/Order.js`
 
 ## C. Производительность
 

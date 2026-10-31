@@ -55,10 +55,11 @@ const Order = sequelize.define(
   {
     timestamps: true,
     tableName: 'Orders',
-    // Дублируются миграцией 0001: sync() нужен для свежих баз и development,
+    // Дублируются миграциями 0001 и 0002: sync() нужен для свежих баз и development,
     // миграция — для уже существующих баз в продакшене.
     indexes: [
-      { name: 'orders_status_idx', fields: ['status'] },
+      // Один индекс на (status, createdAt): он же закрывает фильтр только по status.
+      { name: 'orders_status_created_at_idx', fields: ['status', 'createdAt'] },
       { name: 'orders_created_at_idx', fields: ['createdAt'] },
       { name: 'orders_telegram_chat_id_idx', fields: ['telegramChatId'] },
     ],
