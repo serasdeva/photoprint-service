@@ -1,5 +1,19 @@
 <%- include('./partials/header', { activePage: 'gallery', title: 'Галерея работ', description: 'Примеры выполненных работ: фотопечать, печать документов, сканирование и копирование.' }) %>
 
+<%
+  const currentQ = typeof filters !== 'undefined' && filters ? filters.q : '';
+  const currentCategory = typeof filters !== 'undefined' && filters ? filters.category : '';
+  // Без JS ссылки чипов и «Показать ещё» листают галерею обычными GET-запросами.
+  const galleryHref = (params = {}) => {
+    const search = new URLSearchParams();
+    if (currentQ) search.set('q', currentQ);
+    if (params.category) search.set('category', params.category);
+    if (params.page && params.page > 1) search.set('page', String(params.page));
+    const query = search.toString();
+    return query ? `/gallery?${query}` : '/gallery';
+  };
+%>
+
 <main id="main">
   <section class="page-hero gallery-page-hero">
     <div class="container">
@@ -27,9 +41,9 @@
       </form>
 
       <div class="filter-bar" role="group" aria-label="Фильтр по категориям">
-        <button class="filter-chip active" type="button" data-filter="all">Все</button>
+        <a class="filter-chip<%= currentCategory ? '' : ' active' %>" href="<%= galleryHref() %>" data-filter="all"<% if (!currentCategory) { %> aria-current="page"<% } %>>Все</a>
         <% (categories || []).forEach((category) => { %>
-          <button class="filter-chip" type="button" data-filter="<%= category.value %>"><%= category.label %></button>
+          <a class="filter-chip<%= currentCategory === category.value ? ' active' : '' %>" href="<%= galleryHref({ category: category.value }) %>" data-filter="<%= category.value %>"<% if (currentCategory === category.value) { %> aria-current="page"<% } %>><%= category.label %></a>
         <% }) %>
       </div>
 
@@ -52,6 +66,8 @@
           data-gallery-grid
           data-gallery-total="<%= total %>"
           data-gallery-page-size="<%= pageSize %>"
+          data-gallery-page="<%= page %>"
+          data-gallery-filter="<%= currentCategory || 'all' %>"
           data-gallery-q="<%= typeof filters !== 'undefined' && filters.q ? filters.q : '' %>"
         >
           <% items.forEach((item) => { %>
@@ -84,9 +100,11 @@
         </div>
         <div class="gallery-toolbar">
           <span class="gallery-status" data-gallery-status aria-live="polite"></span>
-          <button type="button" class="btn btn-secondary" data-gallery-more hidden>
-            Показать ещё
-          </button>
+          <% if (typeof page !== 'undefined' && page < pageCount) { %>
+            <a class="btn btn-secondary" data-gallery-more href="<%= galleryHref({ category: currentCategory, page: page + 1 }) %>">
+              Показать ещё
+            </a>
+          <% } %>
         </div>
       <% } %>
     </div>

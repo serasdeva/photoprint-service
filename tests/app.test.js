@@ -1400,6 +1400,70 @@ test('gallery renders first page on server and paginates through the API', async
     );
     assert.ok(expectedFirstPage.some((title) => title.startsWith('Пагинация')));
 
+    // Без JS галерея листается GET-ссылками: страница, категория и q живут в query.
+    const moreHref = page.text.match(/data-gallery-more href="([^"]+)"/);
+    assert.ok(moreHref, 'first page must offer a no-JS link to the next page');
+    assert.equal(moreHref[1].replace(/&amp;/g, '&'), '/gallery?page=2');
+
+    const secondPage = await request(app).get('/gallery?page=2');
+    assert.equal(secondPage.status, 200);
+    assert.equal(
+      (secondPage.text.match(/data-gallery-item/g) || []).length,
+      12,
+      'second server page carries the next 12 works'
+    );
+    assert.match(secondPage.text, /data-gallery-page="2"/);
+    const secondPageTitles = ordered.slice(12, 24).map((item) => item.title);
+    assert.ok(
+      secondPageTitles.every((title) => secondPage.text.includes(title)),
+      'second HTML page must carry works 13..24'
+    );
+    assert.ok(
+      ordered.slice(24).every((title) => !secondPage.text.includes(title)),
+      'works beyond the second page must not be in the HTML'
+    );
+    assert.equal(
+      secondPage.text.match(/data-gallery-more href="([^"]+)"/)?.[1],
+      '/gallery?page=3',
+      'more link advances the server page'
+    );
+
+    const scanPage = await request(app).get('/gallery?category=scan');
+    assert.equal(scanPage.status, 200);
+    assert.match(scanPage.text, /data-gallery-filter="scan"/);
+    assert.equal(
+      (scanPage.text.match(/data-gallery-item/g) || []).length,
+      5,
+      'category filter applies on the server'
+    );
+    assert.match(
+      scanPage.text,
+      /class="filter-chip active" href="\/gallery\?category=scan"/,
+      'active chip is rendered as a plain link'
+    );
+
+    const scanWithQuery = await request(app).get('/gallery?category=scan&q=пагинация');
+    const scanMore = scanWithQuery.text.match(/data-gallery-more href="([^"]+)"/);
+    if (scanMore) {
+      const href = new URL(scanMore[1].replace(/&amp;/g, '&'), 'http://localhost');
+      assert.equal(href.searchParams.get('category'), 'scan', 'fallback link keeps the category');
+      assert.equal(href.searchParams.get('q'), 'пагинация', 'fallback link keeps the query');
+      assert.equal(href.searchParams.get('page'), '2');
+    }
+
+    const pageCount = Math.ceil(ordered.length / 12);
+    const tooFar = await request(app).get('/gallery?page=999');
+    assert.equal(tooFar.status, 200, 'out-of-range page is clamped, not a 404');
+    assert.match(tooFar.text, new RegExp(`data-gallery-page="${pageCount}"`));
+    assert.ok(
+      tooFar.text.includes(ordered[ordered.length - 1].title),
+      'clamped page shows the last work'
+    );
+    assert.doesNotMatch(tooFar.text, /data-gallery-more/, 'last page has no more link');
+
+    const zeroPage = await request(app).get('/gallery?page=0');
+    assert.match(zeroPage.text, /data-gallery-page="1"/, 'page below 1 falls back to the first');
+
     const first = await request(app).get('/api/gallery?limit=5&offset=10');
     assert.equal(first.status, 200);
     assert.equal(first.body.items.length, 5);

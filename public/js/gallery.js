@@ -19,7 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const state = {
     total: Number.parseInt(grid.getAttribute('data-gallery-total'), 10) || 0,
     pageSize: Number.parseInt(grid.getAttribute('data-gallery-page-size'), 10) || 12,
-    filter: 'all',
+    page: Number.parseInt(grid.getAttribute('data-gallery-page'), 10) || 1,
+    filter: grid.getAttribute('data-gallery-filter') || 'all',
     query: grid.getAttribute('data-gallery-q') || '',
     loaded: 0,
     loading: false,
@@ -37,12 +38,21 @@ document.addEventListener('DOMContentLoaded', () => {
       if (state.failed) {
         statusNode.textContent = 'Не удалось догрузить работы. Обновите страницу.';
       } else if (state.total) {
-        statusNode.textContent = `Показано ${state.loaded} из ${state.total}`;
+        const shown = loadedItems().length;
+        statusNode.textContent = `Показано ${shown} из ${state.total}`;
       } else {
         statusNode.textContent = '';
       }
     }
     if (moreButton) {
+      // href — запасной путь без JS; после клиентской фильтрации его нужно пересобрать.
+      const nextPage = Math.floor(state.loaded / state.pageSize) + 1;
+      const params = new URLSearchParams();
+      if (state.query) params.set('q', state.query);
+      if (state.filter !== 'all') params.set('category', state.filter);
+      if (nextPage > 1) params.set('page', String(nextPage));
+      const queryString = params.toString();
+      moreButton.setAttribute('href', queryString ? `/gallery?${queryString}` : '/gallery');
       moreButton.hidden = state.loaded >= state.total;
       moreButton.disabled = state.loading;
     }
@@ -258,13 +268,17 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const setActiveChip = (value) => {
-    filterButtons.forEach((button) =>
-      button.classList.toggle('active', (button.getAttribute('data-filter') || 'all') === value)
-    );
+    filterButtons.forEach((button) => {
+      const active = (button.getAttribute('data-filter') || 'all') === value;
+      button.classList.toggle('active', active);
+      if (active) button.setAttribute('aria-current', 'page');
+      else button.removeAttribute('aria-current');
+    });
   };
 
   filterButtons.forEach((button) => {
-    button.addEventListener('click', () => {
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
       const value = button.getAttribute('data-filter') || 'all';
       if (value === state.filter) return;
       state.filter = value;
@@ -273,7 +287,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  moreButton?.addEventListener('click', () => loadFromApi(state.loaded));
+  moreButton?.addEventListener('click', (event) => {
+    event.preventDefault();
+    loadFromApi(state.loaded);
+  });
 
   // Поиск остаётся серверным GET: canonical и noindex для ?q= уже настроены,
   // а догрузка по category/q работает от серверной первой страницы.
@@ -297,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // серверная первая страница уже в DOM — считаем её загруженной
-  state.loaded = loadedItems().length;
+  state.loaded = (state.page - 1) * state.pageSize + loadedItems().length;
   updateToolbar();
 
   if (filterButtons.length) {

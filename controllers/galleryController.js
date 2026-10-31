@@ -64,15 +64,38 @@ async function queryGallery({ q = '', category = '', offset = 0, limit = SSR_PAG
 
 async function listPublicGallery(req, res) {
   const q = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 120) : '';
-  const { items, total, categories } = await queryGallery({ q });
+  const category =
+    typeof req.query.category === 'string' ? req.query.category.trim().slice(0, 40) : '';
+  const requestedPage = Math.max(parsePositiveInt(req.query.page, 1), 1);
+
+  let page = requestedPage;
+  let result = await queryGallery({
+    q,
+    category,
+    offset: (page - 1) * SSR_PAGE_SIZE,
+    limit: SSR_PAGE_SIZE,
+  });
+  const pageCount = Math.max(1, Math.ceil(result.total / SSR_PAGE_SIZE));
+  if (page > pageCount) {
+    // ?page=999 не должен показывать пустую сетку: прижимаем к последней странице.
+    page = pageCount;
+    result = await queryGallery({
+      q,
+      category,
+      offset: (page - 1) * SSR_PAGE_SIZE,
+      limit: SSR_PAGE_SIZE,
+    });
+  }
 
   res.render('gallery', {
     title: 'Галерея',
-    items,
-    total,
+    items: result.items,
+    total: result.total,
     pageSize: SSR_PAGE_SIZE,
-    categories,
-    filters: { q },
+    page,
+    pageCount,
+    categories: result.categories,
+    filters: { q, category, page },
     activePage: 'gallery',
   });
 }
