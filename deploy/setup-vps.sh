@@ -206,6 +206,10 @@ for attempt in {1..10}; do
   sleep 2
 done
 
+printf 'Installing monitoring (health checks, Telegram alerts, journald limits)...\n'
+APP_USER="$APP_USER" APP_DIR="$APP_DIR" SERVICE_NAME="$SERVICE_NAME" \
+  bash "$APP_DIR/deploy/install-monitoring.sh"
+
 printf '\nRequesting a Let\x27s Encrypt certificate for %s...\n' "$DOMAIN"
 read -r -p 'Certificate contact email: ' CERT_EMAIL
 [[ "$CERT_EMAIL" =~ ^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$ ]] || fail 'Invalid certificate email address.'

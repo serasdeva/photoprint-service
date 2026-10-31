@@ -1,0 +1,10 @@
+[Unit]
+Description=PhotoPrint /healthz check
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=@APP_USER@
+Environment=APP_DIR=@APP_DIR@
+ExecStart=/usr/local/bin/photoprint-healthcheck.sh

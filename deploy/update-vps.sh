@@ -67,5 +67,10 @@ if ! curl --fail --silent --show-error --max-time 15 -o /dev/null "$BASE_URL/hea
   fail "Updated service is active, but $BASE_URL/healthz did not return HTTP success. Backup: $BACKUP_DIR"
 fi
 
+if ! APP_USER="$APP_USER" APP_DIR="$APP_DIR" SERVICE_NAME="$SERVICE_NAME" \
+  bash "$APP_DIR/deploy/install-monitoring.sh"; then
+  printf 'WARNING: monitoring units were not refreshed; inspect install-monitoring.sh output.\n' >&2
+fi
+
 printf 'Update finished successfully. Commit: %s\n' "$REMOTE_COMMIT"
 printf 'Backup: %s\n' "$BACKUP_DIR"

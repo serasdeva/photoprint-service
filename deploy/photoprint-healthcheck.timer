@@ -1,0 +1,11 @@
+[Unit]
+Description=Check PhotoPrint /healthz every minute
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+AccuracySec=10s
+Unit=photoprint-healthcheck.service
+
+[Install]
+WantedBy=timers.target
