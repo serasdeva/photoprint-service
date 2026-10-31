@@ -40,6 +40,7 @@
 - [x] D3. Smoke-тесты (supertest + `node:test`): главная, 404, логин, заявка, отказ по валидации/CSRF, загрузки, CSV, OG-теги
 - [x] D4. GitHub Actions CI: lint + tests
 - [x] D5. Обновить README (скрипты, инструкции безопасности)
+- [x] D6. E2E в браузере: Playwright, проекты `desktop` и `mobile`, 11 сценариев (галерея и лайтбокс, фильтр, маска телефона, тема, бургер-меню, вход в админку и превью настроек), сервер на временной БД в `tests/e2e/server.mjs`, отдельный job `e2e` в CI с артефактами — `playwright.config.js`, `tests/e2e/`, `.github/workflows/ci.yml`
 
 ## E. Улучшения сайта
 
@@ -68,7 +69,7 @@
 ## Итоги выполнения
 
 - `npm run lint` — 0 ошибок; `npm run format:check` — OK
-- `npm test` — 58/58 (node:test + supertest)
+- `npm test` — 58/58 (node:test + supertest), `npm run test:e2e` — 11 сценариев
 - Smoke на живом сервере: все страницы, CSP, CSRF (формы + API), отзыв JWT, CRUD услуг
 - Найден и исправлен по ходу работы баг: CSRF-проверка не видела `_csrf` в multipart-формах
   (проверка перенесена после multer: `verifyCsrfAfterUpload`), добавлен регрессионный тест

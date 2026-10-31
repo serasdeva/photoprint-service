@@ -104,6 +104,18 @@ npm start
 | `npm run format`       | Форматирование Prettier                                         |
 | `npm run format:check` | Проверка форматирования                                         |
 | `npm test`             | Тесты (node:test + supertest)                                   |
+| `npm run test:e2e`     | Сквозные тесты в браузере (Playwright: desktop + mobile)        |
+
+### Сквозные тесты (Playwright)
+
+`npm run test:e2e` поднимает отдельный инстанс на временной БД (`tests/e2e/server.mjs`),
+прогоняет сценарии в проектах `desktop` (Desktop Chrome) и `mobile` (Pixel 5) и гасит сервер.
+Покрыты догрузка галереи и лайтбокс, фильтр по категории, маска телефона, переключение темы,
+бургер-меню и вход в админку с живым предпросмотром настроек.
+
+Локально нужен браузер: либо `npx playwright install chromium`, либо переменная `E2E_CHANNEL`
+со значением `chrome` или `msedge` — тогда Playwright возьмёт уже установленный браузер.
+В CI ставится Chromium, привязанный к версии Playwright.
 
 ## Статика и кеширование
 
@@ -143,8 +155,8 @@ telegram/              # Бот: config, bot, notifications, keyboards, handlers
 seeds/seed.js          # Демо-данные
 tools/                 # build-fontawesome.py — сборка сабсета иконок
 migrations/            # Изменения схемы существующей БД (индексы и т.п.)
-tests/                 # Интеграционные тесты (node:test + supertest)
-.github/workflows/     # CI: lint + format check + tests
+tests/                 # node:test + supertest; tests/e2e — Playwright
+.github/workflows/     # CI: lint + format check + tests + e2e
 utils/                 # asyncHandler, mailer, slugify, uploads
 ```
 

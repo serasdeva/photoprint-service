@@ -35,3 +35,33 @@ jobs:
           SESSION_SECRET: ci-session-secret
           JWT_SECRET: ci-jwt-secret
           BASE_URL: http://localhost:3000
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # Сервер и временную БД поднимает tests/e2e/server.mjs через webServer в конфиге.
+      - name: E2E tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

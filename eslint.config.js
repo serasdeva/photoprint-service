@@ -48,4 +48,26 @@ module.exports = [
       },
     },
   },
+  {
+    // Сервер E2E — модуль: sourceType по расширению не определяется автоматически.
+    files: ['**/*.mjs'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+  {
+    // page.evaluate выполняет колбэк в браузере, поэтому document/getComputedStyle
+    // здесь такие же глобалы, как и process.
+    files: ['tests/e2e/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+      },
+    },
+  },
 ];
