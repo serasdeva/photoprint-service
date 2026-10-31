@@ -146,6 +146,15 @@ utils/                 # asyncHandler, mailer, slugify, uploads
 - Миграции: `sequelize.sync()` создаёт недостающие таблицы, а изменения существующей схемы (индексы, новые колонки) лежат в `migrations/*.js` и применяются при старте. Учёт — в таблице `_schema_migrations`, повторный запуск ничего не делает.
 - Сессии сайта и диалоги бота чистятся автоматически: просроченные файлы в `data/sessions` и `data/telegram-sessions` удаляются при старте и по таймеру.
 
+## Шрифт Manrope
+
+Шрифт тоже отдаётся с нашего сервера, Google Fonts в CSP больше нет: `public/vendor/manrope/{manrope.css,OFL.txt}`
+и четыре вариативных woff2 (400–800) — подсеты cyrillic, cyrillic-ext, latin, latin-ext, всего ~56 КБ.
+`manrope.css` подключён в шапке сайта и админки, кириллический файл предзагружается.
+
+Обновить шрифт: скачать woff2 из Google Fonts (CSS API с `wght@400..800`), заменить файлы с теми же
+именами и сверить `unicode-range` в `manrope.css`. Лицензия — SIL OFL 1.1, текст лежит рядом.
+
 ## Иконки Font Awesome (сабсет)
 
 Иконки отдаются с нашего сервера, CDN не используется: `public/vendor/fontawesome/{icons.css,webfonts/*.woff2}`. Полный дистрибутив (~100 КБ CSS + ~290 КБ шрифтов) не тянем — в сабсете только нужные глифы (CSS ≤ 10 КБ).

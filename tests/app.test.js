@@ -864,6 +864,49 @@ test('Font Awesome is self-hosted and no CDN is referenced', async () => {
   assert.doesNotMatch(csp, /cdnjs\.cloudflare\.com/);
 });
 
+test('Manrope is self-hosted and Google Fonts is no longer referenced', async () => {
+  const vendor = path.join(__dirname, '..', 'public', 'vendor', 'manrope');
+  assert.ok(fs.existsSync(path.join(vendor, 'manrope.css')), 'manrope.css must be committed');
+  assert.ok(fs.existsSync(path.join(vendor, 'OFL.txt')), 'OFL license must live beside the font');
+
+  const fonts = [
+    'manrope-cyrillic-ext.woff2',
+    'manrope-cyrillic.woff2',
+    'manrope-latin-ext.woff2',
+    'manrope-latin.woff2',
+  ];
+  for (const font of fonts) {
+    const file = path.join(vendor, font);
+    assert.ok(fs.existsSync(file), `${font} must be committed`);
+    assert.ok(fs.statSync(file).size > 1000, `${font} looks truncated`);
+    const res = await request(app).get(`/vendor/manrope/${font}`);
+    assert.equal(res.status, 200);
+    assert.match(res.headers['content-type'], /font\/woff2/);
+  }
+
+  for (const page of ['/', '/contacts', '/admin/login']) {
+    const res = await request(app).get(page);
+    assert.equal(res.status, 200);
+    assert.match(res.text, /href="\/vendor\/manrope\/manrope\.css"/);
+    assert.doesNotMatch(res.text, /fonts\.googleapis\.com|fonts\.gstatic\.com/);
+  }
+
+  const css = await request(app).get('/vendor/manrope/manrope.css');
+  assert.equal(css.status, 200);
+  assert.match(css.text, /font-family: 'Manrope'/);
+  assert.match(css.text, /font-weight: 400 800/);
+
+  const legacyCss = fs.readFileSync(
+    path.join(__dirname, '..', 'public', 'css', 'style.css'),
+    'utf8'
+  );
+  assert.doesNotMatch(legacyCss, /fonts\.googleapis\.com/, 'no Google Fonts import may remain');
+
+  const csp = (await request(app).get('/')).headers['content-security-policy'] || '';
+  assert.doesNotMatch(csp, /fonts\.googleapis\.com|fonts\.gstatic\.com/);
+  assert.match(csp, /font-src 'self'/);
+});
+
 test('GET /healthz reports database availability', async () => {
   const res = await request(app).get('/healthz');
   assert.equal(res.status, 200);

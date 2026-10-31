@@ -48,6 +48,7 @@
 - [x] E4. Индикатор отправки формы + honeypot — `public/js/main.js`, `views/partials/header.ejs`
 - [x] E5. Страница политики конфиденциальности + ссылка в форме
 - [x] E6. `theme-color` под светлую и тёмную тему сайта и админки — `views/partials/header.ejs`, `views/admin/partials/start.ejs`, `public/js/theme.js`
+- [x] E7. Manrope на self-host: вариативный woff2 (OFL) в `public/vendor/manrope/`, без Google Fonts в HTML и CSP — `public/vendor/manrope/manrope.css`, `views/partials/header.ejs`, `views/admin/partials/start.ejs`, `app.js`
 
 ## Критерии готовности
 
@@ -59,7 +60,7 @@
 ## Итоги выполнения
 
 - `npm run lint` — 0 ошибок; `npm run format:check` — OK
-- `npm test` — 45/45 (node:test + supertest)
+- `npm test` — 46/46 (node:test + supertest)
 - Smoke на живом сервере: все страницы, CSP, CSRF (формы + API), отзыв JWT, CRUD услуг
 - Найден и исправлен по ходу работы баг: CSRF-проверка не видела `_csrf` в multipart-формах
   (проверка перенесена после multer: `verifyCsrfAfterUpload`), добавлен регрессионный тест
