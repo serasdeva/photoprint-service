@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const bcrypt = require('bcryptjs');
 const { syncDatabase } = require('../config/db');
 const { User, Service, GalleryItem, Setting } = require('../models');
