@@ -630,6 +630,15 @@ test('admin form validation rejects invalid service payload', async () => {
   assert.equal(form.status, 200);
   assert.match(form.text, new RegExp(`id="f-title" name="title" value="${title}"`));
   assert.match(form.text, /value="не число"/);
+  assert.match(form.text, /id="f-icon"[^>]*list="icon-options"/);
+  assert.match(form.text, /<datalist id="icon-options">/);
+  assert.match(form.text, /<option value="fa-print"><\/option>/);
+  assert.match(form.text, /<option value="fa-file-image"><\/option>/);
+  assert.doesNotMatch(
+    form.text,
+    /<option value="fa-image"><\/option>/,
+    'regular-only icon must not be suggested for the solid service icon'
+  );
 
   const galleryTitle = `Черновик галереи ${Date.now()}`;
   const galleryRes = await request(app)
@@ -1119,6 +1128,30 @@ test('every Font Awesome icon in markup exists in the local subset with its styl
     wrongStyle,
     [],
     `иконка не входит в выбранное семейство: ${wrongStyle.join(', ')}`
+  );
+
+  // icons.json читает админка для datalist, поэтому он не должен разойтись со сборщиком.
+  const manifest = JSON.parse(
+    fs.readFileSync(path.join(root, 'public/vendor/fontawesome/icons.json'), 'utf8')
+  );
+  for (const style of ['solid', 'regular', 'brands']) {
+    assert.deepEqual(
+      [...manifest[style]].sort(),
+      [...subset[style]].sort(),
+      `icons.json разошёлся со списком ${style} в tools/build-fontawesome.py`
+    );
+  }
+
+  // Иконка услуги рендерится как class="fa fa-x", а .fa — solid-семейство.
+  const seedSource = fs.readFileSync(path.join(root, 'seeds/seed.js'), 'utf8');
+  const seedIcons = [...seedSource.matchAll(/icon:\s*['"](fa-[a-z0-9-]+)['"]/g)].map((m) =>
+    m[1].slice(3)
+  );
+  const wrongSeedIcons = seedIcons.filter((name) => !subset.solid.has(name)).sort();
+  assert.deepEqual(
+    wrongSeedIcons,
+    [],
+    `иконка услуги из seeds нет в solid-сабсете: ${wrongSeedIcons.join(', ')}`
   );
 });
 

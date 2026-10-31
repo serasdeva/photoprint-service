@@ -9,7 +9,8 @@
   1. Скачать дистрибутив FA 6.5.2 (css/*.min.css и webfonts/*.woff2), например с cdnjs.
   2. python tools/build-fontawesome.py --src <каталог-с-дистрибутивом>
 
-Результат: public/vendor/fontawesome/{icons.css, webfonts/*.woff2}.
+Результат: public/vendor/fontawesome/{icons.css, icons.json, webfonts/*.woff2}.
+icons.json — те же имена по семействам, его читают админка (datalist) и тесты.
 
 Если добавляете на сайт новую иконку — впишите её в USED_IN_APP (или EXTRAS)
 и перезапустите скрипт. Иконки вне сабсета (например, вручную введённые
@@ -17,6 +18,7 @@
 """
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
@@ -207,9 +209,17 @@ def main() -> int:
 
     (out / "icons.css").write_text("\n".join(css_parts) + "\n", encoding="utf-8")
 
+    manifest = {
+        style: sorted(set(USED_IN_APP[style]) | set(EXTRAS[style]))
+        for style in ("solid", "regular", "brands")
+    }
+    (out / "icons.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+
     for style in ("solid", "regular", "brands"):
         size_kb = (out / "webfonts" / STYLES[style]).stat().st_size / 1024
-        count = len(set(USED_IN_APP[style]) | set(EXTRAS[style]))
+        count = len(manifest[style])
         print(f"{STYLES[style]}: {count} иконок, {size_kb:.1f} КБ")
     print(f"CSS: {(out / 'icons.css').stat().st_size / 1024:.1f} КБ -> {out / 'icons.css'}")
     return 0

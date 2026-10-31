@@ -4,6 +4,7 @@ const { createService, updateService } = require('../serviceController');
 const { createGalleryItem, pickUpload } = require('../galleryController');
 const { safeDeleteUpload } = require('../../utils/uploads');
 const { saveAdminFormDraft, consumeAdminFormDraft } = require('../../utils/adminFormDraft');
+const { getSolidIcons } = require('../../utils/fontAwesomeIcons');
 
 async function renderServicesPage(req, res) {
   const term = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 120) : '';
@@ -51,6 +52,7 @@ async function renderServiceForm(req, res) {
     title: service ? 'Редактировать услугу' : 'Новая услуга',
     service,
     formValues,
+    iconOptions: getSolidIcons(),
     activePage: 'services',
   });
 }

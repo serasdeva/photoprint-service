@@ -65,7 +65,7 @@ async function seed() {
         'Печать фото, рекламных материалов и плакатов в хорошем качестве на бумаге A4 и крупнее.',
       price: 90,
       priceUnit: 'лист',
-      icon: 'fa-image',
+      icon: 'fa-file-image',
       order: 2,
       isActive: true,
     },

@@ -51,7 +51,13 @@
           <div class="form-row">
             <div>
               <label for="f-icon">Иконка (Font Awesome)</label>
-              <input id="f-icon" name="icon" value="<%= formValues.icon %>" placeholder="fa-print" />
+              <input id="f-icon" name="icon" value="<%= formValues.icon %>" placeholder="fa-print" list="icon-options" />
+              <div class="form-hint">Начните вводить название — подскажем иконки из локального набора.</div>
+              <datalist id="icon-options">
+                <% iconOptions.forEach((name) => { %>
+                  <option value="fa-<%= name %>"></option>
+                <% }) %>
+              </datalist>
             </div>
             <div>
               <label for="f-order">Порядок</label>
