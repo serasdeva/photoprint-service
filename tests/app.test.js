@@ -1409,6 +1409,11 @@ test('gallery renders first page on server and paginates through the API', async
       ordered.slice(10, 15).map((item) => item.title),
       'offset/limit slice the same ordering the SSR page uses'
     );
+    assert.deepEqual(
+      Object.keys(first.body.items[0]).sort(),
+      ['category', 'description', 'thumbnail', 'title', 'type', 'url'],
+      'API exposes only the card fields, not internal id/order/timestamps'
+    );
 
     const capped = await request(app).get('/api/gallery?limit=500');
     assert.equal(capped.body.items.length, 48, 'limit must be capped at 48');

@@ -77,6 +77,18 @@ async function listPublicGallery(req, res) {
   });
 }
 
+// Публичной галерее не нужны id, order и таймстемпы — отдаём только поля карточки.
+function toPublicGalleryItem(item) {
+  return {
+    title: item.title,
+    category: item.category || 'general',
+    description: item.description || '',
+    type: item.type || 'image',
+    url: item.url,
+    thumbnail: item.thumbnail || null,
+  };
+}
+
 async function getGalleryApi(req, res) {
   const q = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 120) : '';
   const category =
@@ -85,7 +97,7 @@ async function getGalleryApi(req, res) {
   const limit = Math.min(parsePositiveInt(req.query.limit, SSR_PAGE_SIZE), MAX_API_LIMIT);
   const { items, total } = await queryGallery({ q, category, offset, limit });
 
-  res.json({ items, total });
+  res.json({ items: items.map(toPublicGalleryItem), total });
 }
 
 function pickUpload(req, field) {

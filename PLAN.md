@@ -53,6 +53,7 @@
 - [x] E8. Страница отдельной заявки и фильтр по датам в админке (фильтр дат общий для списка и CSV, `returnTo` после смены статуса с белым списком) — `controllers/admin/orders.js`, `routes/admin.js`, `views/admin/order.ejs`, `views/admin/orders.ejs`
 - [x] E9. Автотест иконок: каждая `fa-*` из разметки есть в `icons.css` и в своём семействе сабсета — `tests/app.test.js`; тест сразу нашёл пустой `fa-solid fa-eye` в списке заявок (исправлен на `fa-regular`)
 - [x] E10. Подсказка иконок в админке: сборщик кладёт `icons.json`, поле «Иконка» получает datalist только с solid-именами (услуга рендерится как `class="fa fa-x"`), тест сверяет манифест со списками сборщика и solid-принадлежность иконок из `seeds/seed.js` — `tools/build-fontawesome.py`, `utils/fontAwesomeIcons.js`, `controllers/admin/catalog.js`, `views/admin/service-form.ejs`
+- [x] E11. Публичный `/api/gallery` отдаёт только поля карточки (`title`, `category`, `description`, `type`, `url`, `thumbnail`), без `id`, `order` и таймстемпов — `controllers/galleryController.js`, `tests/app.test.js`
 
 ## Критерии готовности
 
