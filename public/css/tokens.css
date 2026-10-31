@@ -31,10 +31,12 @@
   --overlay: rgba(9, 14, 24, 0.62);
 
   /* Feedback */
-  --success: #16a34a;
+  /* --success и --warning используются как цвет текста на светлых плашках: оттенок 700
+     вместо 600 держит контраст выше AA 4.5:1 (проверено для #f0fdf4 и #fffbeb). */
+  --success: #15803d;
   --success-soft: #f0fdf4;
   --success-border: #bbf7d0;
-  --warning: #d97706;
+  --warning: #b45309;
   --warning-soft: #fffbeb;
   --warning-border: #fde68a;
   --danger: #dc2626;

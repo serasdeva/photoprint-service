@@ -26,7 +26,7 @@ const { asset } = require('../utils/assets');
 buildAssets();
 
 const { app, startApp } = require('../app');
-const { sequelize, User, Service, GalleryItem, Order } = require('../models');
+const { sequelize, User, Service, GalleryItem, Order, Setting } = require('../models');
 const { runMigrations } = require('../config/migrations');
 
 let csrfToken;
@@ -1760,4 +1760,58 @@ test('uploads accept .jpeg extension for services and gallery', async () => {
     await Service.destroy({ where: { title: serviceTitle } });
     await GalleryItem.destroy({ where: { title: galleryTitle } });
   }
+});
+
+test('map embed accepts one https iframe and rejects injected markup', async () => {
+  const jar = await loginJar();
+  const valid =
+    '<iframe src="https://www.google.com/maps?q=test&output=embed" width="100%" height="100%" loading="lazy"></iframe>';
+  const existing = await Setting.findOne({ where: { key: 'mapEmbed' } });
+  const originalValue = existing ? existing.value : null;
+
+  try {
+    const accepted = await request(app)
+      .post('/admin/settings')
+      .set('Cookie', cookieHeader(jar))
+      .set('Accept', 'text/html')
+      .type('form')
+      .send({ _csrf: csrfToken, mapEmbed: valid });
+
+    assert.equal(accepted.status, 302);
+    assert.equal((await Setting.findOne({ where: { key: 'mapEmbed' } })).value, valid);
+
+    const payloads = [
+      `${valid}<script>alert(1)</script>`,
+      '<iframe src="javascript:alert(1)"></iframe>',
+      '<iframe src="https://example.com/map" onload="alert(1)"></iframe>',
+      '<iframe src="http://example.com/map"></iframe>',
+    ];
+
+    for (const payload of payloads) {
+      await request(app)
+        .post('/admin/settings')
+        .set('Cookie', cookieHeader(jar))
+        .set('Accept', 'text/html')
+        .type('form')
+        .send({ _csrf: csrfToken, mapEmbed: payload });
+
+      const stored = await Setting.findOne({ where: { key: 'mapEmbed' } });
+      assert.equal(stored.value, valid, `должен быть отклонён: ${payload}`);
+    }
+  } finally {
+    if (existing) {
+      await existing.update({ value: originalValue });
+    } else {
+      await Setting.destroy({ where: { key: 'mapEmbed' } });
+    }
+  }
+});
+
+test('admin pages are rate limited', async () => {
+  const jar = await loginJar();
+  const res = await request(app).get('/admin').set('Cookie', cookieHeader(jar));
+
+  assert.equal(res.status, 200);
+  const limit = res.headers['ratelimit-limit'] || res.headers['ratelimit'];
+  assert.ok(limit, 'GET /admin must send rate limit headers');
 });

@@ -54,6 +54,25 @@ const authLimiter = rateLimit({
   },
 });
 
+// Каждая страница админки читает базу, поэтому ограничиваем и просмотр, а не только вход:
+// 600 страниц за 15 минут — это ~40 в минуту, человек в такой темп не упирается.
+const adminReadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 600,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler(req, res) {
+    res.status(429).type('text/plain').send('Слишком много запросов. Попробуйте позже.');
+  },
+});
+
+function limitAdminReads(req, res, next) {
+  if (req.method !== 'GET') {
+    return next();
+  }
+  return adminReadLimiter(req, res, next);
+}
+
 function failUpload(req, res, message) {
   const section = req.path.startsWith('/gallery') ? 'gallery' : 'services';
   saveAdminFormDraft(req, section, req.params.id);
@@ -215,6 +234,7 @@ router.post('/login', authLimiter, asyncHandler(loginUser));
 router.post('/logout', asyncHandler(logoutUser));
 
 router.use(requireAuth);
+router.use(limitAdminReads);
 
 router.get('/', asyncHandler(renderDashboard));
 

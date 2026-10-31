@@ -14,6 +14,24 @@ const ALLOWED_SETTING_KEYS = [
   'mapEmbed',
 ];
 
+// Карта — единственное место, куда админ вставляет HTML. Пропускаем ровно один iframe
+// с https-источником: хвост вроде <script> после него и javascript: в src раньше проходили.
+const MAP_EMBED_PATTERN = /^<iframe\b[^>]*\ssrc\s*=\s*["']([^"']+)["'][^>]*>\s*<\/iframe>$/i;
+const INLINE_HANDLER = /\son[a-z]+\s*=/i;
+
+function isMapEmbed(value) {
+  const match = MAP_EMBED_PATTERN.exec(String(value || '').trim());
+  if (!match || INLINE_HANDLER.test(match[0])) {
+    return false;
+  }
+
+  try {
+    return new URL(match[1]).protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 async function upsertSetting(key, value) {
   const existing = await Setting.findOne({ where: { key } });
   if (existing) {
@@ -40,11 +58,8 @@ async function saveSettings(req, res) {
 
       let value = String(req.body[key] ?? '');
 
-      if (key === 'mapEmbed') {
-        const allowedPattern = /<iframe\s+[^>]*src=["'][^"']+["'][^>]*>\s*<\/iframe>/i;
-        if (!allowedPattern.test(value)) {
-          throw new Error('Недопустимый HTML-код карты');
-        }
+      if (key === 'mapEmbed' && !isMapEmbed(value)) {
+        throw new Error('Недопустимый HTML-код карты');
       }
 
       await upsertSetting(key, value);
