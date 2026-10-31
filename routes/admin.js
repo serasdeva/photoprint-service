@@ -19,6 +19,7 @@ const {
   saveGallery,
   deleteGallery,
   renderOrdersPage,
+  exportOrdersCsv,
   updateOrderStatus,
   deleteOrder,
   renderSettingsPage,
@@ -216,6 +217,8 @@ router.post(
 router.post('/gallery/:id/delete', asyncHandler(deleteGallery));
 
 router.get('/orders', asyncHandler(renderOrdersPage));
+// GET-маршрут без тела: CSRF не нужен, доступ закрывает requireAuth выше.
+router.get('/orders/export', asyncHandler(exportOrdersCsv));
 router.post('/orders/:id/status', asyncHandler(updateOrderStatus));
 router.patch('/orders/:id/status', asyncHandler(updateOrderStatus));
 router.post('/orders/:id/delete', asyncHandler(deleteOrder));

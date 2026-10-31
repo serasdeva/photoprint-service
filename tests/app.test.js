@@ -527,6 +527,79 @@ test('admin order search matches Cyrillic regardless of case', async () => {
   }
 });
 
+test('admin exports orders to CSV with the same filters as the list', async () => {
+  const doneOrder = await Order.create({
+    name: 'Иван Смирнов',
+    phone: '+7 900 111-22-33',
+    email: 'ivan@example.com',
+    service: 'Печать фото',
+    message: 'Нужно 20 шт, срочно',
+    status: 'done',
+    source: 'site',
+  });
+  const newOrder = await Order.create({
+    name: '=HYPERLINK("http://evil.example")',
+    phone: '+7 900 444-55-66',
+    service: 'Сканирование',
+    message: 'строка1\nстрока2',
+    status: 'new',
+    source: 'telegram',
+  });
+  const jar = await loginJar();
+
+  try {
+    const denied = await request(app).get('/admin/orders/export');
+    assert.equal(denied.status, 302, 'export must stay behind the admin login');
+
+    const res = await request(app)
+      .get('/admin/orders/export?status=done&q=Смирнов')
+      .set('Cookie', cookieHeader(jar));
+    assert.equal(res.status, 200);
+    assert.match(res.headers['content-type'], /text\/csv/i);
+    assert.match(res.headers['content-type'], /utf-8/i);
+    assert.match(
+      res.headers['content-disposition'],
+      /^attachment; filename="orders-\d{4}-\d{2}-\d{2}\.csv"$/,
+      'download must carry a dated ASCII filename'
+    );
+
+    const body = res.text;
+    assert.ok(body.startsWith('﻿'), 'BOM, otherwise Excel shows Cyrillic as mojibake');
+
+    const [, ...dataLines] = body.slice(1).trimEnd().split('\r\n');
+    assert.equal(dataLines.length, 1, 'status and q filters must apply to the export too');
+
+    // Разбирать строку по запятой нельзя: внутри quoted-поля тоже есть запятая.
+    const row = dataLines[0];
+    assert.ok(row.startsWith(`${doneOrder.id},`), 'id comes first');
+    assert.match(row, /,\d{4}-\d{2}-\d{2} \d{2}:\d{2},/, 'sortable date-time column');
+    assert.ok(row.includes('Иван Смирнов'));
+    assert.ok(
+      row.includes(",'+7 900 111-22-33,"),
+      'a value starting with + is a formula trigger, so it gets an apostrophe (invisible in Excel)'
+    );
+    assert.ok(row.includes('ivan@example.com'));
+    assert.ok(row.includes('"Нужно 20 шт, срочно"'), 'comma inside a value must be quoted');
+    assert.ok(row.endsWith(',done,site'), 'status and source are the last columns');
+
+    const escaped = await request(app)
+      .get('/admin/orders/export?q=HYPERLINK')
+      .set('Cookie', cookieHeader(jar));
+    assert.equal(escaped.status, 200);
+    assert.ok(
+      escaped.text.includes(`'=HYPERLINK(""http://evil.example"")`),
+      'formula-looking input must be neutralised and inner quotes doubled'
+    );
+    assert.ok(
+      escaped.text.includes('"строка1\nстрока2"'),
+      'a newline inside a value must stay quoted so the row does not break'
+    );
+    assert.match(escaped.text, /,new,telegram\r?\n$/, 'source column distinguishes bot orders');
+  } finally {
+    await Promise.all([doneOrder.destroy(), newOrder.destroy()]);
+  }
+});
+
 test('search URLs keep a clean canonical and are marked noindex', async () => {
   const res = await request(app).get('/services?q=тест');
   assert.equal(res.status, 200);

@@ -9,6 +9,12 @@
   </div>
 
   <div class="admin-card">
+    <%
+      const exportParams = new URLSearchParams();
+      if (filters.status) exportParams.set('status', filters.status);
+      if (filters.q) exportParams.set('q', filters.q);
+      const exportLink = '/admin/orders/export' + (exportParams.toString() ? '?' + exportParams.toString() : '');
+    %>
     <form method="GET" action="/admin/orders" class="orders-toolbar">
       <select name="status" aria-label="Фильтр по статусу">
         <option value="" <%= !filters.status ? 'selected' : '' %>>Все статусы</option>
@@ -20,6 +26,9 @@
       <button type="submit" class="btn btn-secondary btn-sm">
         <i class="fa-solid fa-magnifying-glass"></i> Найти
       </button>
+      <a class="btn btn-secondary btn-sm" href="<%= exportLink %>">
+        <i class="fa-solid fa-file-arrow-down"></i> Экспорт CSV
+      </a>
       <% if (filters.status || filters.q) { %>
         <a href="/admin/orders" class="btn btn-ghost btn-sm">Сбросить</a>
       <% } %>

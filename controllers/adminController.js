@@ -4,11 +4,23 @@ const { createService, updateService } = require('./serviceController');
 const { createGalleryItem, pickUpload } = require('./galleryController');
 const { getSettingsMap, invalidateSettingsCache } = require('./homeController');
 const { safeDeleteUpload } = require('../utils/uploads');
+const { toCsv, formatDateTime, formatFileDate } = require('../utils/csv');
 const { saveAdminFormDraft, consumeAdminFormDraft } = require('../utils/adminFormDraft');
 const { notifyClientStatusChange } = require('../telegram/notifications');
 const { getDeepLink } = require('../telegram/config');
 
 const ORDER_STATUSES = ['new', 'in_progress', 'done'];
+const ORDER_EXPORT_COLUMNS = [
+  'id',
+  'createdAt',
+  'name',
+  'phone',
+  'email',
+  'service',
+  'message',
+  'status',
+  'source',
+];
 
 async function renderDashboard(req, res) {
   const [services, galleryItems, totalOrders, newOrdersCount, newOrders, orders] =
@@ -283,19 +295,24 @@ async function deleteGallery(req, res) {
   return res.redirect('/admin/gallery');
 }
 
-async function renderOrdersPage(req, res) {
-  const { status, q } = req.query;
+// Список и экспорт обязаны фильтровать одинаково, иначе «Скачать CSV» выдаст не то, что видит админ.
+async function findFilteredOrders(query) {
   const where = {};
+  const status = typeof query.status === 'string' ? query.status : '';
 
   if (status && ORDER_STATUSES.includes(status)) {
     where.status = status;
   }
 
-  const term = typeof q === 'string' ? q.trim() : '';
-  // Поиск по имени/телефону/услуге фильтруем в JS: SQLite LIKE регистрозависим для кириллицы.
+  const term = typeof query.q === 'string' ? query.q.trim().slice(0, 120) : '';
   const rows = await Order.findAll({ where, order: [['createdAt', 'DESC']], raw: true });
-  const matched = filterByTerm(rows, term, ['name', 'phone', 'email', 'service']);
-  const { items, pagination } = paginate(matched, req.query.page, 20);
+  // SQLite LIKE не учитывает регистр кириллицы, поэтому поиск остаётся на стороне JS.
+  return { rows: filterByTerm(rows, term, ['name', 'phone', 'email', 'service']), term, status };
+}
+
+async function renderOrdersPage(req, res) {
+  const { rows, term, status } = await findFilteredOrders(req.query);
+  const { items, pagination } = paginate(rows, req.query.page, 20);
 
   res.render('admin/orders', {
     title: 'Заявки',
@@ -304,6 +321,22 @@ async function renderOrdersPage(req, res) {
     pagination,
     activePage: 'orders',
   });
+}
+
+async function exportOrdersCsv(req, res) {
+  const { rows } = await findFilteredOrders(req.query);
+
+  const dataRows = rows.map((order) =>
+    ORDER_EXPORT_COLUMNS.map((column) =>
+      column === 'createdAt' ? formatDateTime(order.createdAt) : order[column]
+    )
+  );
+
+  // Имя файла только ASCII: кириллица в Content-Disposition требует filename*=UTF-8''...
+  const filename = `orders-${formatFileDate(new Date())}.csv`;
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.send(toCsv(ORDER_EXPORT_COLUMNS, dataRows));
 }
 
 async function updateOrderStatus(req, res) {
@@ -509,6 +542,7 @@ module.exports = {
   saveGallery,
   deleteGallery,
   renderOrdersPage,
+  exportOrdersCsv,
   updateOrderStatus,
   deleteOrder,
   renderSettingsPage,
