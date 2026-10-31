@@ -50,6 +50,7 @@
               src="<%= gallery[0].type === 'video' ? (gallery[0].thumbnail || '/gallery-placeholders/sample-1.svg') : gallery[0].url %>"
               alt="<%= gallery[0].title %>"
               fetchpriority="high"
+              <% if (gallery[0].type !== 'video' && gallery[0].width && gallery[0].height) { %>width="<%= gallery[0].width %>" height="<%= gallery[0].height %>"<% } %>
             />
             <span class="hero-art-caption">
               <i class="fa-regular fa-images"></i>
@@ -168,7 +169,7 @@
         <% services.forEach((service) => { %>
           <article class="card service-card card-hover reveal" data-service-card data-title="<%= service.title.toLowerCase() %>" data-desc="<%= (service.description||'').toLowerCase() %>">
             <div class="service-media">
-              <img src="<%= service.image || '/gallery-placeholders/service-default.svg' %>" alt="<%= service.title %>" loading="lazy" />
+              <img src="<%= service.image || '/gallery-placeholders/service-default.svg' %>" alt="<%= service.title %>" loading="lazy"<% if (service.width && service.height) { %> width="<%= service.width %>" height="<%= service.height %>"<% } %> />
               <span class="service-icon"><i class="fa <%= service.icon || 'fa-print' %>"></i></span>
             </div>
             <div class="service-body">
@@ -323,7 +324,7 @@
               <video src="<%= item.url %>" muted playsinline preload="metadata"></video>
               <span class="play-badge"><i class="fa-solid fa-play"></i></span>
             <% } else { %>
-              <img src="<%= item.url %>" alt="<%= item.title %>" loading="lazy" />
+              <img src="<%= item.url %>" alt="<%= item.title %>" loading="lazy"<% if (item.width && item.height) { %> width="<%= item.width %>" height="<%= item.height %>"<% } %> />
             <% } %>
             <figcaption>
               <strong><%= item.title %></strong>

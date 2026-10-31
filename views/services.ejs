@@ -39,7 +39,7 @@
           <% services.forEach((service) => { %>
             <article class="card service-card card-hover reveal">
               <div class="service-media">
-                <img src="<%= service.image || '/gallery-placeholders/service-default.svg' %>" alt="<%= service.title %>" loading="lazy" />
+                <img src="<%= service.image || '/gallery-placeholders/service-default.svg' %>" alt="<%= service.title %>" loading="lazy"<% if (service.width && service.height) { %> width="<%= service.width %>" height="<%= service.height %>"<% } %> />
                 <span class="service-icon"><i class="fa <%= service.icon || 'fa-print' %>"></i></span>
               </div>
               <div class="service-body">

@@ -193,6 +193,8 @@ async function saveGallery(req, res) {
         if (item.url) safeDeleteUpload(item.url);
         updateData.url = `/uploads/gallery/${mediaFile.filename}`;
         updateData.thumbnail = null;
+        updateData.width = mediaFile.mimetype === 'video/mp4' ? null : (mediaFile.width ?? null);
+        updateData.height = mediaFile.mimetype === 'video/mp4' ? null : (mediaFile.height ?? null);
         mediaCleared = true;
       }
 

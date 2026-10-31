@@ -1,6 +1,6 @@
 # План исправлений и улучшений PhotoPrint Service
 
-Статус: все пункты выполнены и проверены (lint, format, 50/50 тестов, smoke)
+Статус: все пункты выполнены и проверены (lint, format, 51/51 тестов, smoke)
 Приоритет выполнения: A → B → C → D → E
 
 ## A. Безопасность
@@ -37,14 +37,14 @@
 
 - [x] D1. ESLint + `npm run lint`
 - [x] D2. Prettier + `npm run format`
-- [x] D3. Smoke-тесты (supertest + vitest): главная, 404, логин, заявка, отказ по валидации/CSRF
+- [x] D3. Smoke-тесты (supertest + `node:test`): главная, 404, логин, заявка, отказ по валидации/CSRF, загрузки, CSV, OG-теги
 - [x] D4. GitHub Actions CI: lint + tests
 - [x] D5. Обновить README (скрипты, инструкции безопасности)
 
 ## E. Улучшения сайта
 
 - [x] E1. Пагинация/ленивая загрузка галереи (счётчик фильтра уже есть) — `views/gallery.ejs`, `public/js/gallery.js`
-- [x] E2. Постер-превью для видео вместо пустого placeholder — `utils/thumbnail.js`, `controllers/galleryController.js`, `views/admin/gallery-form.ejs`
+- [x] E2. Постер-превью для видео вместо пустого placeholder — постер загружается вручную в форме элемента галереи (`views/admin/gallery-form.ejs`, `controllers/admin/catalog.js`)
 - [x] E3. canonical + og:image/og:url на публичных страницах — `views/partials/header.ejs`, у страницы услуги свой `og:image` — `utils/ogImage.js`, `controllers/serviceController.js:32`
 - [x] E4. Индикатор отправки формы + honeypot — `public/js/main.js`, `views/partials/header.ejs`
 - [x] E5. Страница политики конфиденциальности + ссылка в форме
@@ -53,7 +53,8 @@
 - [x] E8. Страница отдельной заявки и фильтр по датам в админке (фильтр дат общий для списка и CSV, `returnTo` после смены статуса с белым списком) — `controllers/admin/orders.js`, `routes/admin.js`, `views/admin/order.ejs`, `views/admin/orders.ejs`
 - [x] E9. Автотест иконок: каждая `fa-*` из разметки есть в `icons.css` и в своём семействе сабсета — `tests/app.test.js`; тест сразу нашёл пустой `fa-solid fa-eye` в списке заявок (исправлен на `fa-regular`)
 - [x] E10. Подсказка иконок в админке: сборщик кладёт `icons.json`, поле «Иконка» получает datalist только с solid-именами (услуга рендерится как `class="fa fa-x"`), тест сверяет манифест со списками сборщика и solid-принадлежность иконок из `seeds/seed.js` — `tools/build-fontawesome.py`, `utils/fontAwesomeIcons.js`, `controllers/admin/catalog.js`, `views/admin/service-form.ejs`
-- [x] E11. Публичный `/api/gallery` отдаёт только поля карточки (`title`, `category`, `description`, `type`, `url`, `thumbnail`), без `id`, `order` и таймстемпов — `controllers/galleryController.js`, `tests/app.test.js`
+- [x] E11. Публичный `/api/gallery` отдаёт только поля карточки (`title`, `category`, `description`, `type`, `url`, `thumbnail`, `width`, `height`), без `id`, `order` и таймстемпов — `controllers/galleryController.js`, `tests/app.test.js`
+- [x] E12. Загрузки изображений обрабатываются `sharp`: EXIF-поворот, ресайз до 1920 px (постеры — до 1280 px), WebP ~82, оригинал удаляется; размеры пишутся в БД миграцией `0004` и выводятся в `width`/`height` шаблонов против скачков layout — `middleware/upload.js`, `migrations/0004-image-dimensions.js`, `models/`, `controllers/`, `views/`
 
 ## Критерии готовности
 
@@ -65,7 +66,7 @@
 ## Итоги выполнения
 
 - `npm run lint` — 0 ошибок; `npm run format:check` — OK
-- `npm test` — 50/50 (node:test + supertest)
+- `npm test` — 51/51 (node:test + supertest)
 - Smoke на живом сервере: все страницы, CSP, CSRF (формы + API), отзыв JWT, CRUD услуг
 - Найден и исправлен по ходу работы баг: CSRF-проверка не видела `_csrf` в multipart-формах
   (проверка перенесена после multer: `verifyCsrfAfterUpload`), добавлен регрессионный тест

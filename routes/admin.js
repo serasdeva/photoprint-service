@@ -11,6 +11,7 @@ const {
   uploadGalleryMedia,
   POSTER_MAX_BYTES,
   posterWithinLimit,
+  processUploadedImages,
 } = require('../middleware/upload');
 const { loginPage, loginUser, logoutUser } = require('../controllers/authController');
 const {
@@ -76,6 +77,22 @@ function handleUpload(uploadMiddleware, maxMb) {
           : err.message || 'Ошибка загрузки файла';
       return failUpload(req, res, message);
     });
+  };
+}
+
+function handleImages() {
+  return (req, res, next) => {
+    processUploadedImages(req)
+      .then(() => next())
+      .catch((error) => {
+        console.error('Image processing failed:', error.message);
+        discardUploadedFile(req);
+        return failUpload(
+          req,
+          res,
+          'Не удалось обработать изображение — возможно, файл повреждён. Попробуйте другой файл.'
+        );
+      });
   };
 }
 
@@ -209,6 +226,7 @@ router.post(
   handleUpload(uploadServiceImage.single('image'), 5),
   verifyCsrfAfterUpload,
   validate(serviceRules),
+  handleImages(),
   asyncHandler(saveService)
 );
 router.post(
@@ -216,6 +234,7 @@ router.post(
   handleUpload(uploadServiceImage.single('image'), 5),
   verifyCsrfAfterUpload,
   validate(serviceRules),
+  handleImages(),
   asyncHandler(saveService)
 );
 router.post('/services/:id/delete', asyncHandler(deleteService));
@@ -234,6 +253,7 @@ router.post(
   rejectOversizedPoster,
   verifyCsrfAfterUpload,
   validate(galleryRules),
+  handleImages(),
   asyncHandler(saveGallery)
 );
 router.post(
@@ -242,6 +262,7 @@ router.post(
   rejectOversizedPoster,
   verifyCsrfAfterUpload,
   validate(galleryRules),
+  handleImages(),
   asyncHandler(saveGallery)
 );
 router.post('/gallery/:id/delete', asyncHandler(deleteGallery));

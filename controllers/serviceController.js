@@ -98,6 +98,8 @@ async function createService(req, _res) {
     order: Number(order || 0),
     isActive: String(isActive) === 'on' || Boolean(isActive),
     image: req.file ? `/uploads/services/${req.file.filename}` : null,
+    width: req.file ? (req.file.width ?? null) : null,
+    height: req.file ? (req.file.height ?? null) : null,
   });
 
   return service;
@@ -126,11 +128,15 @@ async function updateService(req, res, service) {
       safeDeleteUpload(service.image);
     }
     updateData.image = `/uploads/services/${req.file.filename}`;
+    updateData.width = req.file.width ?? null;
+    updateData.height = req.file.height ?? null;
   } else if (removeImage === '1' || removeImage === 'on') {
     if (service.image) {
       safeDeleteUpload(service.image);
     }
     updateData.image = null;
+    updateData.width = null;
+    updateData.height = null;
   }
 
   await service.update(updateData);

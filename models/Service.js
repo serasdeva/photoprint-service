@@ -38,6 +38,15 @@ const Service = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    // Габариты обработанного изображения: шаблон ставит их в width/height и layout не прыгает.
+    width: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    height: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     icon: {
       type: DataTypes.STRING,
       allowNull: true,

@@ -22,7 +22,7 @@
     <div class="container contact-grid service-detail-grid">
       <div class="card reveal service-detail-card">
         <div class="service-media service-detail-media">
-          <img src="<%= service.image || '/gallery-placeholders/service-default.svg' %>" alt="<%= service.title %>" />
+          <img src="<%= service.image || '/gallery-placeholders/service-default.svg' %>" alt="<%= service.title %>"<% if (service.width && service.height) { %> width="<%= service.width %>" height="<%= service.height %>"<% } %> />
           <span class="service-icon"><i class="fa <%= service.icon || 'fa-print' %>"></i></span>
         </div>
         <p class="text-muted service-detail-description"><%= service.description %></p>

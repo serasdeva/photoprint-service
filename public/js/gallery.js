@@ -92,6 +92,10 @@ document.addEventListener('DOMContentLoaded', () => {
       media = document.createElement('img');
       media.alt = title;
       media.loading = 'lazy';
+      if (item.width && item.height) {
+        media.width = item.width;
+        media.height = item.height;
+      }
       media.src = item.url;
       figure.append(media);
     }

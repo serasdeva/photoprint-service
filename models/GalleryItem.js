@@ -27,6 +27,15 @@ const GalleryItem = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    // Габариты медиа-картинки (для видео остаются null).
+    width: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    height: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     category: {
       type: DataTypes.STRING,
       allowNull: false,

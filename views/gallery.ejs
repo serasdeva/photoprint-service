@@ -87,7 +87,7 @@
                 <video src="<%= item.url %>" muted playsinline preload="metadata"<% if (item.thumbnail) { %> poster="<%= item.thumbnail %>"<% } %>></video>
                 <span class="play-badge"><i class="fa-solid fa-play"></i></span>
               <% } else { %>
-                <img src="<%= item.url %>" alt="<%= item.title %>" loading="lazy" />
+                <img src="<%= item.url %>" alt="<%= item.title %>" loading="lazy"<% if (item.width && item.height) { %> width="<%= item.width %>" height="<%= item.height %>"<% } %> />
               <% } %>
               <figcaption>
                 <strong><%= item.title %></strong>

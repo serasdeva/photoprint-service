@@ -17,6 +17,7 @@ const { test, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 const request = require('supertest');
 const bcrypt = require('bcryptjs');
+const sharp = require('sharp');
 
 const { buildAssets } = require('../tools/build-assets');
 const { asset } = require('../utils/assets');
@@ -478,7 +479,7 @@ test('admin uploads files, rejects wrong types, oversized posters and videos', a
     assert.equal(serviceRes.status, 302);
     const service = await Service.findOne({ where: { title: serviceTitle } });
     assert.ok(service, 'service with uploaded image must be created');
-    assert.match(service.image, /^\/uploads\/services\/[\w.-]+\.png$/);
+    assert.match(service.image, /^\/uploads\/services\/[\w.-]+\.webp$/);
     createdFiles.push(diskPath(service.image));
     assert.ok(fs.existsSync(createdFiles.at(-1)), 'uploaded service image must exist on disk');
 
@@ -500,7 +501,7 @@ test('admin uploads files, rejects wrong types, oversized posters and videos', a
     assert.ok(item, 'gallery item with video and poster must be created');
     assert.equal(item.type, 'video');
     assert.match(item.url, /^\/uploads\/gallery\/[\w.-]+\.mp4$/);
-    assert.match(item.thumbnail, /^\/uploads\/gallery\/[\w.-]+\.png$/);
+    assert.match(item.thumbnail, /^\/uploads\/gallery\/[\w.-]+\.webp$/);
     createdFiles.push(diskPath(item.url), diskPath(item.thumbnail));
     assert.ok(fs.existsSync(diskPath(item.thumbnail)), 'uploaded poster must exist on disk');
 
@@ -1475,7 +1476,7 @@ test('gallery renders first page on server and paginates through the API', async
     );
     assert.deepEqual(
       Object.keys(first.body.items[0]).sort(),
-      ['category', 'description', 'thumbnail', 'title', 'type', 'url'],
+      ['category', 'description', 'height', 'thumbnail', 'title', 'type', 'url', 'width'],
       'API exposes only the card fields, not internal id/order/timestamps'
     );
 
@@ -1514,5 +1515,117 @@ test('gallery renders first page on server and paginates through the API', async
     assert.deepEqual(emptyCategory.body, { items: [], total: 0 });
   } finally {
     await cleanup();
+  }
+});
+
+test('uploaded images are resized to webp and broken files are rejected', async () => {
+  const jar = await loginJar();
+  const uploadsRoot = path.join(__dirname, '..', 'public');
+  const createdFiles = [];
+  const bigTitle = `Большое фото ${Date.now()}`;
+  const posterTitle = `Работа с постером ${Date.now()}`;
+  const brokenTitle = `Битое фото ${Date.now()}`;
+
+  const bigJpeg = await sharp({
+    create: { width: 2400, height: 1600, channels: 3, background: { r: 200, g: 80, b: 60 } },
+  })
+    .jpeg({ quality: 92 })
+    .toBuffer();
+  const posterPng = await sharp({
+    create: { width: 2000, height: 1500, channels: 3, background: { r: 40, g: 90, b: 200 } },
+  })
+    .png()
+    .toBuffer();
+
+  try {
+    const serviceRes = await request(app)
+      .post('/admin/services')
+      .set('Cookie', cookieHeader(jar))
+      .set('Accept', 'text/html')
+      .field('_csrf', csrfToken)
+      .field('title', bigTitle)
+      .field('price', '10')
+      .field('isActive', 'on')
+      .attach('image', bigJpeg, { filename: 'big.jpg', contentType: 'image/jpeg' });
+
+    assert.equal(serviceRes.status, 302);
+    const service = await Service.findOne({ where: { title: bigTitle } });
+    assert.ok(service, 'service with big photo must be created');
+    assert.match(service.image, /\.webp$/);
+    const servicePath = path.join(uploadsRoot, service.image.replace(/^\//, ''));
+    createdFiles.push(servicePath);
+
+    // Читаем файл в буфер: sharp может ещё держать дескриптор, а Windows не даёт удалить файл.
+    const readMeta = (filePath) => sharp(fs.readFileSync(filePath)).metadata();
+    const serviceMeta = await readMeta(servicePath);
+    assert.equal(serviceMeta.format, 'webp');
+    assert.ok(
+      serviceMeta.width <= 1920 && serviceMeta.height <= 1920,
+      `размер ${serviceMeta.width}×${serviceMeta.height}`
+    );
+    const serviceSize = fs.statSync(servicePath).size;
+    assert.ok(serviceSize < 500 * 1024, `webp весит ${Math.round(serviceSize / 1024)} КБ`);
+    assert.equal(service.width, serviceMeta.width, 'DB must keep processed image width');
+    assert.equal(service.height, serviceMeta.height, 'DB must keep processed image height');
+
+    const servicesHtml = await request(app).get('/services');
+    assert.match(
+      servicesHtml.text,
+      new RegExp(`width="${serviceMeta.width}" height="${serviceMeta.height}"`),
+      'service card must reserve the image box'
+    );
+
+    const galleryRes = await request(app)
+      .post('/admin/gallery')
+      .set('Cookie', cookieHeader(jar))
+      .set('Accept', 'text/html')
+      .field('_csrf', csrfToken)
+      .field('title', posterTitle)
+      .field('category', 'photo')
+      .attach('media', bigJpeg, { filename: 'photo.jpg', contentType: 'image/jpeg' })
+      .attach('poster', posterPng, { filename: 'poster.png', contentType: 'image/png' });
+
+    assert.equal(galleryRes.status, 302);
+    const item = await GalleryItem.findOne({ where: { title: posterTitle } });
+    assert.ok(item, 'gallery item with big media and poster must be created');
+    assert.equal(item.type, 'image');
+    const mediaMeta = await readMeta(path.join(uploadsRoot, item.url.replace(/^\//, '')));
+    assert.equal(item.width, mediaMeta.width, 'gallery item must keep processed media width');
+    assert.equal(item.height, mediaMeta.height, 'gallery item must keep processed media height');
+    const mediaPath = path.join(uploadsRoot, item.url.replace(/^\//, ''));
+    const posterPath = path.join(uploadsRoot, item.thumbnail.replace(/^\//, ''));
+    createdFiles.push(mediaPath, posterPath);
+
+    const posterMeta = await readMeta(posterPath);
+    assert.ok(
+      posterMeta.width <= 1280 && posterMeta.height <= 1280,
+      `постер ${posterMeta.width}×${posterMeta.height}`
+    );
+
+    const broken = await request(app)
+      .post('/admin/services')
+      .set('Cookie', cookieHeader(jar))
+      .set('Accept', 'text/html')
+      .field('_csrf', csrfToken)
+      .field('title', brokenTitle)
+      .field('price', '10')
+      .attach('image', Buffer.from('это точно не изображение'), {
+        filename: 'broken.png',
+        contentType: 'image/png',
+      });
+
+    assert.equal(broken.status, 302);
+    assert.match(broken.headers.location, /\/admin\/services\/new/);
+    assert.equal(
+      await Service.findOne({ where: { title: brokenTitle } }),
+      null,
+      'broken upload must not create a row'
+    );
+  } finally {
+    createdFiles.forEach((file) =>
+      fs.rmSync(file, { force: true, maxRetries: 5, retryDelay: 100 })
+    );
+    await Service.destroy({ where: { title: [bigTitle, brokenTitle] } });
+    await GalleryItem.destroy({ where: { title: posterTitle } });
   }
 });

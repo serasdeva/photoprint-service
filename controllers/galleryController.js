@@ -109,6 +109,8 @@ function toPublicGalleryItem(item) {
     type: item.type || 'image',
     url: item.url,
     thumbnail: item.thumbnail || null,
+    width: item.width ?? null,
+    height: item.height ?? null,
   };
 }
 
@@ -155,6 +157,8 @@ async function createGalleryItem(req, _res) {
     type: resolvedType,
     url: `/uploads/gallery/${mediaFile.filename}`,
     thumbnail: posterFile ? `/uploads/gallery/${posterFile.filename}` : null,
+    width: resolvedType === 'image' ? (mediaFile.width ?? null) : null,
+    height: resolvedType === 'image' ? (mediaFile.height ?? null) : null,
     order: Number(order || 0),
   });
 }
