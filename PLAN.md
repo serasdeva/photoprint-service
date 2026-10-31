@@ -25,7 +25,7 @@
 ## C. Производительность
 
 - [x] C1. Кэш `getSettingsMap()` (TTL 60 с, сброс в `saveSettings`) — `app.js:79-92`, `controllers/homeController.js:14`
-- [x] C2. Пагинация заявок в админке — `controllers/adminController.js:213`, `views/admin/orders.ejs`
+- [x] C2. Пагинация заявок в админке — `controllers/admin/orders.js:34`, `views/admin/orders.ejs`
 - [x] C3. sitemap.xml: страницы услуг из БД — `app.js:113-116`
 - [x] C4. `Cache-Control: no-store` для `/admin` — `routes/admin.js`
 

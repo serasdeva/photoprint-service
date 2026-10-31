@@ -27,7 +27,7 @@ const {
   renderTelegramPage,
   saveTelegramSettings,
   sendTelegramTest,
-} = require('../controllers/adminController');
+} = require('../controllers/admin');
 
 const router = express.Router();
 
