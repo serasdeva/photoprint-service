@@ -27,7 +27,7 @@
 
     <% if (!orders.length) { %>
       <div class="empty-state">
-        <i class="fa-regular fa-inbox"></i>
+        <i class="fa-solid fa-inbox"></i>
         <h3><%= (filters.status || filters.q) ? 'Ничего не найдено' : 'Заявок пока нет' %></h3>
         <p><%= (filters.status || filters.q) ? 'Попробуйте изменить параметры поиска.' : 'Как только клиент оставит заявку на сайте, она появится здесь.' %></p>
         <% if (filters.status || filters.q) { %>

@@ -119,9 +119,10 @@ models/                # Service, GalleryItem, Order, Setting, User, RevokedToke
 routes/                # public, admin, api
 middleware/            # auth (JWT-cookie + отзыв), csrf (double-submit), upload (multer)
 views/                 # EJS: публичные страницы + views/admin
-public/                # css, js, uploads
+public/                # css, js, uploads, vendor/fontawesome (сабсет иконок)
 telegram/              # Бот: config, bot, notifications, keyboards, handlers/*
 seeds/seed.js          # Демо-данные
+tools/                 # build-fontawesome.py — сборка сабсета иконок
 migrations/            # Изменения схемы существующей БД (индексы и т.п.)
 tests/                 # Интеграционные тесты (node:test + supertest)
 .github/workflows/     # CI: lint + format check + tests
@@ -135,6 +136,7 @@ utils/                 # asyncHandler, mailer, slugify, uploads
 - Multer (загрузка файлов), Helmet, express-rate-limit, express-validator
 - Nodemailer (опционально), bcryptjs
 - Vanilla JS + собственный CSS (light/dark)
+- Font Awesome 6.5.2 — локальный сабсет, без CDN
 
 ## Эксплуатация
 
@@ -143,6 +145,23 @@ utils/                 # asyncHandler, mailer, slugify, uploads
 - SQLite работает в режиме WAL с `busy_timeout = 5000`, поэтому сайт и бот могут писать одновременно.
 - Миграции: `sequelize.sync()` создаёт недостающие таблицы, а изменения существующей схемы (индексы, новые колонки) лежат в `migrations/*.js` и применяются при старте. Учёт — в таблице `_schema_migrations`, повторный запуск ничего не делает.
 - Сессии сайта и диалоги бота чистятся автоматически: просроченные файлы в `data/sessions` и `data/telegram-sessions` удаляются при старте и по таймеру.
+
+## Иконки Font Awesome (сабсет)
+
+Иконки отдаются с нашего сервера, CDN не используется: `public/vendor/fontawesome/{icons.css,webfonts/*.woff2}`. Полный дистрибутив (~100 КБ CSS + ~290 КБ шрифтов) не тянем — в сабсете только нужные глифы (CSS ≤ 10 КБ).
+
+Сборка:
+
+```bash
+# 1. Скачать FA 6.5.2: css/all.min.css и webfonts/fa-{solid-900,regular-400,brands-400}.woff2
+# 2. Собрать сабсет (нужен Python 3 + fontTools + brotli):
+python -m venv .venv-fa && .venv-fa/Scripts/pip install fonttools brotli
+.venv-fa/Scripts/python tools/build-fontawesome.py --src <каталог-с-дистрибутивом>
+```
+
+Скрипт берёт имена иконок из `USED_IN_APP` (реально используемые) и `EXTRAS` (запас для поля «Иконка» в админке), вырезает глифы из woff2 и пишет компактный CSS. Если нужной иконки нет в списке — добавьте её туда и перезапустите; иконки вне сабсета не отрисуются. На ошибку скрипт падает с внятным сообщением: не найденного в FA имени либо глифа, которого нет в выбранном стиле (часть иконок в FA Free существует только в solid).
+
+Поле «Иконка (Font Awesome)» в админке — свободный текст: оно ограничено сабсетом (168 solid / 29 regular / 10 brands), в FA Free отсутствуют `sparkles`, `printer`, `monitor`.
 
 ## Заметки
 

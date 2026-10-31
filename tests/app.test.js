@@ -557,6 +557,25 @@ test('social preview tags point to a committed 1200x630 raster image', async () 
   assert.ok(fs.statSync(asset).size > 20 * 1024, 'og-image must not be a placeholder');
 });
 
+test('Font Awesome is self-hosted and no CDN is referenced', async () => {
+  const vendor = path.join(__dirname, '..', 'public', 'vendor', 'fontawesome');
+  assert.ok(fs.existsSync(path.join(vendor, 'icons.css')), 'icons.css must be built and committed');
+  for (const font of ['fa-solid-900.woff2', 'fa-regular-400.woff2', 'fa-brands-400.woff2']) {
+    assert.ok(fs.existsSync(path.join(vendor, 'webfonts', font)), `${font} must be committed`);
+  }
+
+  for (const page of ['/', '/contacts', '/admin/login']) {
+    const res = await request(app).get(page);
+    assert.equal(res.status, 200);
+    assert.match(res.text, /href="\/vendor\/fontawesome\/icons\.css"/);
+    assert.doesNotMatch(res.text, /cdnjs\.cloudflare\.com/);
+    assert.match(res.text, /class="fa-solid fa-print"/);
+  }
+
+  const csp = (await request(app).get('/')).headers['content-security-policy'] || '';
+  assert.doesNotMatch(csp, /cdnjs\.cloudflare\.com/);
+});
+
 test('GET /healthz reports database availability', async () => {
   const res = await request(app).get('/healthz');
   assert.equal(res.status, 200);

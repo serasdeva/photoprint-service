@@ -52,7 +52,7 @@ USED_IN_APP = {
     ],
     "regular": [
         "address-card", "circle-check", "clock", "copy", "eye", "face-frown",
-        "file", "folder-open", "image", "images", "inbox", "trash-can", "user",
+        "file", "folder-open", "image", "images", "trash-can", "user",
     ],
     "brands": ["telegram"],
 }
@@ -64,7 +64,7 @@ EXTRAS = {
         "angle-up", "arrow-down", "arrows-rotate", "award", "barcode",
         "battery-full", "bolt", "box", "boxes", "briefcase", "building",
         "bus", "calendar", "calendar-check", "calendar-days", "car",
-        "chart-line", "chart-simple", "clipboard", "clipboard-check",
+        "chart-line", "chart-simple", "circle-info", "clipboard", "clipboard-check",
         "cloud", "cloud-arrow-down", "cloud-arrow-up", "code", "coins",
         "comment", "comments", "computer-mouse", "credit-card", "crop",
         "database", "desktop", "display", "download", "droplet", "earth-americas",
@@ -84,7 +84,7 @@ EXTRAS = {
         "volume-high", "wallet", "wand-magic-sparkles", "wifi",
     ],
     "regular": [
-        "bell", "calendar", "circle", "circle-info", "clock", "comment",
+        "bell", "calendar", "circle", "circle-check", "clock", "comment",
         "envelope", "face-smile", "file-lines", "file-pdf", "heart",
         "hourglass-half", "moon", "pen-to-square", "square", "star", "sun",
         "thumbs-up", "trash-alt",
@@ -143,15 +143,34 @@ def parse_css(css_path: Path) -> dict:
     return mapping
 
 
-def subset_font(src: Path, dst: Path, codepoints) -> None:
+def subset_font(src: Path, dst: Path, names, mapping, style: str) -> None:
+    """Вырезает запрошенные глифы и проверяет, что ни один не отбрасан молча.
+
+    В FA Free часть имён существует только в solid (circle-info, inbox). Селекторы
+    `.fa-<имя>:before` в all.min.css не несут стиля, так что имя из regular-списка
+    даёт codepoint, которого в fa-regular-400 нет — сабсет молча делает пустую
+    иконку. Поэтому сверяем итоговый cmap с запрошенным.
+    """
     options = Options()
     options.flavor = "woff2"
     options.desubroutinize = True
     font = load_font(str(src), options)
     subsetter = Subsetter(options)
-    subsetter.populate(unicodes=codepoints)
+    wanted = {int(mapping[name], 16) for name in names}
+    subsetter.populate(unicodes=sorted(wanted))
     subsetter.subset(font)
     save_font(font, str(dst), options)
+
+    kept = set(load_font(str(dst), options).getBestCmap())
+    dropped = sorted(wanted - kept)
+    if dropped:
+        by_cp = {int(mapping[name], 16): name for name in names}
+        details = ", ".join(f"fa-{by_cp[cp]} ({hex(cp)})" for cp in dropped)
+        raise SystemExit(
+            f"style '{style}': запрошено {len(wanted)} глифов, в {STYLES[style]} их нет "
+            f"{len(dropped)} — {details}.\n"
+            f"Перенесите эти имена в другой стиль или уберите из списка."
+        )
 
 
 def main() -> int:
@@ -174,11 +193,12 @@ def main() -> int:
             print(f"Ошибка: в {CSS_FILES[style]} нет иконок: {', '.join(missing)}", file=sys.stderr)
             return 1
 
-        codepoints = [int(mapping[name], 16) for name in wanted]
         subset_font(
             src / "webfonts" / STYLES[style],
             out / "webfonts" / STYLES[style],
-            codepoints,
+            wanted,
+            mapping,
+            style,
         )
 
         css_parts.append(f'@font-face{{font-family:"{FONT_FAMILY[style]}";font-style:normal;font-weight:{FONT_WEIGHT[style]};font-display:block;src:url("webfonts/{STYLES[style]}") format("woff2")}}')
