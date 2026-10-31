@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Website for photo printing, copying and document services",
   "main": "server.js",
+  "engines": {
+    "node": "^20.19.0 || ^22.13.0 || >=24.0.0"
+  },
   "scripts": {
     "build:assets": "node tools/build-assets.js",
     "prestart": "npm run build:assets",

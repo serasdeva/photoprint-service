@@ -133,6 +133,15 @@ EnvironmentFile=$APP_DIR/.env
 ExecStart=$NODE_BIN server.js
 Restart=always
 RestartSec=5
+# Минимальные права: процессу не нужны ни новые привилегии, ни запись в /usr,/etc,
+# ни общий /tmp. Каталоги приложения (/var/www/...) остаются доступны на запись.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
 
 [Install]
 WantedBy=multi-user.target

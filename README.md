@@ -162,7 +162,7 @@ utils/                 # asyncHandler, mailer, slugify, uploads
 
 ## Технологии
 
-- Node.js 20.17+, Express 5, EJS, Sequelize + SQLite
+- Node.js 20.19+ (CI гоняет 20 и 22, локально 24), Express 5, EJS, Sequelize + SQLite
 - JWT + cookie auth, express-session, connect-flash
 - Multer (загрузка файлов), Helmet, express-rate-limit, express-validator
 - Nodemailer (опционально), bcryptjs 3

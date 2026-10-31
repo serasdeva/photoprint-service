@@ -1,0 +1,18 @@
+# Git хранит текст с LF, а Windows-чекаут не должен приносить CRLF в bash-скрипты:
+# иначе деплой падает с «bad interpreter». Бинарные файлы не трогаем.
+* text=auto eol=lf
+
+*.sh text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.woff2 binary
+*.gz binary

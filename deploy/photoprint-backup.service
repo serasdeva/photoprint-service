@@ -9,3 +9,7 @@ Type=oneshot
 User=@APP_USER@
 Environment=APP_DIR=@APP_DIR@
 ExecStart=/usr/local/bin/photoprint-backup.sh
+# Бэкапу нужны только чтение каталога приложения и запись в /var/backups.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full

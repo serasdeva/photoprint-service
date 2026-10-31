@@ -59,6 +59,7 @@
 - [x] E13. Мониторинг: systemd-таймер раз в минуту проверяет `/healthz`, алерты в Telegram с дедупликацией и сообщением о восстановлении, `OnFailure=` для сервиса, journald ограничен 500 МБ — `deploy/healthcheck.sh`, `deploy/install-monitoring.sh`, `deploy/photoprint-*`, `deploy/setup-vps.sh`, `deploy/update-vps.sh`
 - [x] E14. Мажорные зависимости: `sqlite3` 6.0.1, `express` 5.3.0, `helmet` 8.3.0, `express-rate-limit` 8.7.2, `bcryptjs` 3.0.3, `dotenv` 18.0.9; `dotenv` переведён на `quiet`, runtime-audit сокращён до 2 moderate (цепочка `sequelize`/`uuid`) — `package.json`, `package-lock.json`, `app.js`, `seeds/seed.js`
 - [x] E15. Эксплуатация: ежедневный бэкап (`sqlite3 .backup` + `PRAGMA integrity_check` + uploads, ретенция 14) и восстановление с проверкой целостности — `deploy/backup.sh`, `deploy/restore.sh`, `deploy/install-backup.sh`, `deploy/photoprint-backup.{service,timer}`; `HOST=127.0.0.1` на VPS, fail-fast при неудачном certbot, кеш `/uploads` на 30 дней
+- [x] E16. Гигиена: `engines` (Node 20.19+/22.13+/24+), `.gitattributes` с LF для скриптов, systemd-hardening (`NoNewPrivileges`, `PrivateTmp`, `ProtectSystem=full`), контраст `--danger` доведён до AA — `package.json`, `.gitattributes`, `deploy/setup-vps.sh`, `deploy/photoprint-backup.service`, `public/css/tokens.css`
 
 ## Критерии готовности
 
