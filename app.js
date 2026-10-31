@@ -121,6 +121,10 @@ app.use(
   '/uploads',
   express.static(path.join(__dirname, 'public', 'uploads'), {
     index: false,
+    // Имена файлов содержат метку времени и случайный хвост и никогда не переиспользуются,
+    // поэтому галерея может кешироваться надолго: иначе каждая фотография перепроверялась бы.
+    maxAge: '30d',
+    immutable: true,
     setHeaders(res, filePath) {
       const forbiddenExtensions = ['.html', '.htm', '.svg', '.xml', '.js', '.json', '.css'];
       const ext = path.extname(filePath).toLowerCase();

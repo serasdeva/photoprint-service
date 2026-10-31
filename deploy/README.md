@@ -1,6 +1,6 @@
 # VPS deployment automation
 
-These scripts target a fresh Ubuntu VPS and this app's systemd service. They do not configure a domain's DNS or the VPS provider's external firewall.
+These scripts target a fresh Ubuntu VPS and this app's systemd service. They do not configure a domain's DNS or the VPS provider's external firewall: allow inbound TCP 22, 80 and 443 only.
 
 ## Initial setup
 
@@ -12,15 +12,21 @@ less setup-vps.sh
 sudo bash setup-vps.sh https://github.com/serasdeva/photoprint-service.git docs.co99.win
 ```
 
-The script installs Node.js 20, Nginx, Certbot and SQLite tooling; creates or uses the `photoprint` system account; clones the repository; installs production dependencies; creates `.env` with generated secrets if one does not already exist; seeds a new database only; configures systemd and Nginx; checks the local app; and requests HTTPS. It prints the generated admin password once. Save it securely.
+The script installs Node.js 20, Nginx, Certbot and SQLite tooling; creates or uses the `photoprint` system account; clones the repository; installs production dependencies; creates `.env` with generated secrets if one does not already exist; seeds a new database only; configures systemd and Nginx; checks the local app; installs monitoring and daily backups; requests HTTPS; and verifies `https://<domain>/healthz`. It prints the generated admin password once. Save it securely.
 
-If the repository is private, configure GitHub SSH/deploy-key access before running the script and pass the SSH clone URL instead.
+The app listens on `127.0.0.1:3000` (`HOST` in `.env`), so port 3000 must stay closed in the provider firewall: only Nginx with TLS is public.
 
-The script does not overwrite an existing `.env` or seed an existing SQLite database. If certificate issuance fails, verify DNS and external firewall ports 80/443, then run:
+The script fails if HTTPS cannot be configured, and that is intentional. With `NODE_ENV=production` every cookie (CSRF, auth, session) is marked `Secure`, so over plain HTTP the browser does not store them: order forms return 403 and nobody can log into the admin panel.
+
+If certificate issuance fails, the script exits with instructions. Fix DNS and inbound ports 80/443, then run:
 
 ```bash
 sudo certbot --nginx -d docs.co99.win --email your-email@example.com --agree-tos --non-interactive --redirect
 ```
+
+If the repository is private, configure GitHub SSH/deploy-key access before running the script and pass the SSH clone URL instead.
+
+The script does not overwrite an existing `.env` or seed an existing SQLite database.
 
 ## Apply updates from GitHub
 
@@ -30,13 +36,43 @@ Commit and push code changes to `main` from your development machine. On the VPS
 sudo bash /var/www/photoprint-service/deploy/update-vps.sh
 ```
 
-The updater refuses dirty or divergent checkouts, fetches `origin/main`, creates a SQLite online backup and an uploads archive, fast-forward merges only, runs `npm ci --omit=dev`, builds hashed static assets (`npm run build:assets`), restarts systemd and checks the configured `BASE_URL`. Backups are stored under `/var/backups/photoprint-service/`.
+The updater refuses dirty or divergent checkouts, fetches `origin/main`, creates a SQLite online backup and an uploads archive, fast-forward merges only, runs `npm ci --omit=dev`, builds hashed static assets (`npm run build:assets`), restarts systemd, checks the configured `BASE_URL`, and refreshes the monitoring and backup units. Backups are stored under `/var/backups/photoprint-service/`.
 
 If the Git remote's default branch is not `main`, invoke it with `BRANCH=branch-name`:
 
 ```bash
 sudo env BRANCH=branch-name bash /var/www/photoprint-service/deploy/update-vps.sh
 ```
+
+## Backups and restore
+
+`install-backup.sh` (called by both setup and update scripts) installs `photoprint-backup.timer`:
+
+- runs `deploy/backup.sh` daily at 03:30; `Persistent=true` catches up after host downtime;
+- takes a consistent snapshot with `sqlite3 .backup`, verifies it with `PRAGMA integrity_check`, then archives `public/uploads`;
+- keeps the last 14 runs (`KEEP_COUNT`), older timestamp directories are deleted;
+- writes to `/var/backups/photoprint-service/<UTC stamp>/`, readable only by the app user.
+
+Manual run and logs:
+
+```bash
+sudo systemctl start photoprint-backup.service
+sudo journalctl -u photoprint-backup -n 50 --no-pager
+```
+
+Restore a specific backup:
+
+```bash
+sudo bash /var/www/photoprint-service/deploy/restore.sh /var/backups/photoprint-service/20261101T033000Z
+```
+
+The restore script verifies the dump, stops the service, moves the current database and uploads to `data/pre-restore-<stamp>/` (never into `public/`), removes stale `-wal`/`-shm` files (they would corrupt the restored database), unpacks the new copy, starts the service and waits for `/healthz`. It asks for confirmation; pass `--yes` for non-interactive use. A corrupted backup is rejected before the service is touched.
+
+Backups stay on the same VPS: copy them off-site (provider snapshots, `rclone`, S3/B2) and rehearse a restore on a copy before relying on them.
+
+## Migrations
+
+Schema changes live in `migrations/*.js` and run automatically at startup: the runner records applied files in `_schema_migrations` and wraps each migration in a transaction. Do not change the production schema by hand — add a migration file, test it on a copy of the production database, and deploy through `update-vps.sh`, which takes a database and uploads backup before merging.
 
 ## Monitoring and alerts
 
@@ -60,8 +96,8 @@ The timer runs on the same VPS: it survives an application crash but not a host 
 ## Important
 
 - Keep `.env` out of Git and do not share its contents.
+- If `.env` was created before `HOST` support, add `HOST=127.0.0.1` and restart the service: otherwise the app keeps listening on all interfaces.
 - The updater does not run `npm run seed`; seed is for first-time initialization only.
-- The current app uses Sequelize `sync` without production schema alterations and does not include a migration system. For database model/schema changes, prepare and test a migration/backup/restore procedure before deploying; the update script cannot migrate schemas automatically.
 - Configure SMTP `MAIL_*` values in `.env` separately if order email notifications are needed. Restart the service after changing `.env`.
 - Check service logs with `sudo journalctl -u photoprint -n 100 --no-pager`.
-- The scripts create backups but do not clean them up or copy them off the VPS. Keep separate off-server backups for disaster recovery.
+- Backups are rotated locally (14 runs) but never copied off the VPS: keep separate off-server backups or provider snapshots for disaster recovery.

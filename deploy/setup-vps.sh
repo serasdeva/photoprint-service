@@ -90,6 +90,8 @@ if [[ ! -f "$APP_DIR/.env" ]]; then
   cat > "$APP_DIR/.env" <<EOF
 NODE_ENV=production
 PORT=3000
+# Слушаем только loopback: снаружи виден только nginx с TLS.
+HOST=127.0.0.1
 SESSION_SECRET=$SESSION_SECRET
 JWT_SECRET=$JWT_SECRET
 ADMIN_USERNAME=$ADMIN_USERNAME
@@ -210,16 +212,40 @@ printf 'Installing monitoring (health checks, Telegram alerts, journald limits).
 APP_USER="$APP_USER" APP_DIR="$APP_DIR" SERVICE_NAME="$SERVICE_NAME" \
   bash "$APP_DIR/deploy/install-monitoring.sh"
 
+printf 'Installing daily backups...\n'
+APP_USER="$APP_USER" APP_DIR="$APP_DIR" SERVICE_NAME="$SERVICE_NAME" \
+  bash "$APP_DIR/deploy/install-backup.sh"
+
 printf '\nRequesting a Let\x27s Encrypt certificate for %s...\n' "$DOMAIN"
 read -r -p 'Certificate contact email: ' CERT_EMAIL
 [[ "$CERT_EMAIL" =~ ^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$ ]] || fail 'Invalid certificate email address.'
-SITE_SCHEME='http'
-if certbot --nginx -d "$DOMAIN" --email "$CERT_EMAIL" --agree-tos --non-interactive --redirect; then
-  printf 'HTTPS configured successfully.\n'
-  SITE_SCHEME='https'
-else
-  printf 'WARNING: Certificate setup failed. HTTP is serving the site; verify DNS and ports 80/443, then retry Certbot.\n' >&2
-fi
+if ! certbot --nginx -d "$DOMAIN" --email "$CERT_EMAIL" --agree-tos --non-interactive --redirect; then
+  cat >&2 <<'EOF'
+ERROR: HTTPS is not configured.
 
-printf '\nSetup finished. Site: %s://%s\nAdmin: %s://%s/admin/login\n' "$SITE_SCHEME" "$DOMAIN" "$SITE_SCHEME" "$DOMAIN"
+The app runs with NODE_ENV=production, so every cookie (CSRF, auth, session) is
+marked Secure. Without HTTPS the browser will not store them: order forms return
+403 and the admin panel cannot log in. Do not announce this site over plain HTTP.
+
+Fix DNS and ports 80/443, then run:
+  sudo certbot --nginx -d <domain> --email <email> --agree-tos --non-interactive --redirect
+EOF
+  exit 1
+fi
+printf 'HTTPS configured successfully.\n'
+
+# Проверяем TLS снаружи, а не только локальный порт: сертификат и редирект должны
+# работать до объявления запуска.
+printf 'Checking HTTPS...\n'
+for attempt in {1..15}; do
+  if curl -fsS --max-time 10 -o /dev/null "https://$DOMAIN/healthz"; then
+    break
+  fi
+  if [[ "$attempt" -eq 15 ]]; then
+    fail "https://$DOMAIN/healthz did not respond. Check DNS, certificate and port 443."
+  fi
+  sleep 2
+done
+
+printf '\nSetup finished. Site: https://%s\nAdmin: https://%s/admin/login\n' "$DOMAIN" "$DOMAIN"
 printf 'Check service with: systemctl status %s\n' "$SERVICE_NAME"

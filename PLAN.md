@@ -58,6 +58,7 @@
 - [x] E12. Загрузки изображений обрабатываются `sharp`: EXIF-поворот, ресайз до 1920 px (постеры — до 1280 px), WebP ~82, оригинал удаляется; размеры пишутся в БД миграцией `0004` и выводятся в `width`/`height` шаблонов против скачков layout — `middleware/upload.js`, `migrations/0004-image-dimensions.js`, `models/`, `controllers/`, `views/`
 - [x] E13. Мониторинг: systemd-таймер раз в минуту проверяет `/healthz`, алерты в Telegram с дедупликацией и сообщением о восстановлении, `OnFailure=` для сервиса, journald ограничен 500 МБ — `deploy/healthcheck.sh`, `deploy/install-monitoring.sh`, `deploy/photoprint-*`, `deploy/setup-vps.sh`, `deploy/update-vps.sh`
 - [x] E14. Мажорные зависимости: `sqlite3` 6.0.1, `express` 5.3.0, `helmet` 8.3.0, `express-rate-limit` 8.7.2, `bcryptjs` 3.0.3, `dotenv` 18.0.9; `dotenv` переведён на `quiet`, runtime-audit сокращён до 2 moderate (цепочка `sequelize`/`uuid`) — `package.json`, `package-lock.json`, `app.js`, `seeds/seed.js`
+- [x] E15. Эксплуатация: ежедневный бэкап (`sqlite3 .backup` + `PRAGMA integrity_check` + uploads, ретенция 14) и восстановление с проверкой целостности — `deploy/backup.sh`, `deploy/restore.sh`, `deploy/install-backup.sh`, `deploy/photoprint-backup.{service,timer}`; `HOST=127.0.0.1` на VPS, fail-fast при неудачном certbot, кеш `/uploads` на 30 дней
 
 ## Критерии готовности
 

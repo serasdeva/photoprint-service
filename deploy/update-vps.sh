@@ -72,5 +72,10 @@ if ! APP_USER="$APP_USER" APP_DIR="$APP_DIR" SERVICE_NAME="$SERVICE_NAME" \
   printf 'WARNING: monitoring units were not refreshed; inspect install-monitoring.sh output.\n' >&2
 fi
 
+if ! APP_USER="$APP_USER" APP_DIR="$APP_DIR" SERVICE_NAME="$SERVICE_NAME" \
+  bash "$APP_DIR/deploy/install-backup.sh"; then
+  printf 'WARNING: backup units were not refreshed; inspect install-backup.sh output.\n' >&2
+fi
+
 printf 'Update finished successfully. Commit: %s\n' "$REMOTE_COMMIT"
 printf 'Backup: %s\n' "$BACKUP_DIR"

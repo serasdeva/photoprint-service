@@ -1,0 +1,12 @@
+[Unit]
+Description=Daily PhotoPrint backup
+
+[Timer]
+# Ночью, когда заявок почти нет; Persistent=true догонит пропущенный запуск после простоя.
+OnCalendar=*-*-* 03:30:00
+AccuracySec=5min
+Persistent=true
+Unit=photoprint-backup.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,11 @@
+[Unit]
+Description=PhotoPrint daily backup (SQLite + uploads)
+After=network.target
+# Если бэкап упал, это должна узнать эксплуатация: молчаливые бэкапы хуже отсутствующих.
+OnFailure=photoprint-alert@%n.service
+
+[Service]
+Type=oneshot
+User=@APP_USER@
+Environment=APP_DIR=@APP_DIR@
+ExecStart=/usr/local/bin/photoprint-backup.sh

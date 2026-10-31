@@ -1762,6 +1762,21 @@ test('uploads accept .jpeg extension for services and gallery', async () => {
   }
 });
 
+test('uploaded files are served with a long immutable cache', async () => {
+  const file = path.join(__dirname, '..', 'public', 'uploads', 'gallery', '__cache-check.webp');
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, Buffer.from([0, 1, 2, 3]));
+
+  try {
+    const res = await request(app).get('/uploads/gallery/__cache-check.webp');
+    assert.equal(res.status, 200);
+    assert.match(res.headers['cache-control'], /max-age=2592000/, '30 дней');
+    assert.match(res.headers['cache-control'], /immutable/, 'файлы не переиспользуют имена');
+  } finally {
+    fs.rmSync(file, { force: true });
+  }
+});
+
 test('map embed accepts one https iframe and rejects injected markup', async () => {
   const jar = await loginJar();
   const valid =

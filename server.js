@@ -8,10 +8,12 @@ const SHUTDOWN_TIMEOUT_MS = 10 * 1000;
 async function main() {
   const app = await startApp();
   const port = process.env.PORT || 3000;
+  // На VPS HOST=127.0.0.1: наружу выходит только nginx с TLS. Пустое значение — все интерфейсы.
+  const host = process.env.HOST || '0.0.0.0';
   const server = http.createServer(app);
 
-  server.listen(port, () => {
-    console.log(`PhotoPrint service running on http://localhost:${port}`);
+  server.listen(port, host, () => {
+    console.log(`PhotoPrint service running on http://${host}:${port}`);
   });
 
   initBot();
