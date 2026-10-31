@@ -38,6 +38,25 @@ If the Git remote's default branch is not `main`, invoke it with `BRANCH=branch-
 sudo env BRANCH=branch-name bash /var/www/photoprint-service/deploy/update-vps.sh
 ```
 
+## Monitoring and alerts
+
+`setup-vps.sh` and `update-vps.sh` call `install-monitoring.sh`, which installs an idempotent set of systemd units:
+
+- `photoprint-healthcheck.timer` runs `healthcheck.sh` every minute and checks `/healthz`;
+- a failed check sends one Telegram alert per outage plus a recovery message (repeats at most hourly);
+- `OnFailure=` in a `photoprint.service` drop-in triggers an immediate alert when the service unit fails;
+- a journald drop-in caps logs at `SystemMaxUse=500M` / `SystemMaxFileSize=50M`.
+
+Alerts require `BOT_TOKEN` and a chat id: `ALERT_CHAT_ID` from `.env`, otherwise `BOT_ADMIN_CHAT_ID`, otherwise the Telegram chat id saved in the admin settings (read from SQLite via `sqlite3`). To verify:
+
+```bash
+sudo -u photoprint /usr/local/bin/photoprint-healthcheck.sh --test
+sudo systemctl status photoprint-healthcheck.timer
+sudo journalctl -u photoprint-healthcheck.service -n 50 --no-pager
+```
+
+The timer runs on the same VPS: it survives an application crash but not a host outage. For host-level monitoring point an external uptime service at `https://<domain>/healthz`; `503` means the database is unavailable.
+
 ## Important
 
 - Keep `.env` out of Git and do not share its contents.

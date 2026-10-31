@@ -1,6 +1,6 @@
 # План исправлений и улучшений PhotoPrint Service
 
-Статус: все пункты выполнены и проверены (lint, format, 51/51 тестов, smoke)
+Статус: все пункты выполнены и проверены (lint, format, 52/52 теста, smoke)
 Приоритет выполнения: A → B → C → D → E
 
 ## A. Безопасность
@@ -55,6 +55,8 @@
 - [x] E10. Подсказка иконок в админке: сборщик кладёт `icons.json`, поле «Иконка» получает datalist только с solid-именами (услуга рендерится как `class="fa fa-x"`), тест сверяет манифест со списками сборщика и solid-принадлежность иконок из `seeds/seed.js` — `tools/build-fontawesome.py`, `utils/fontAwesomeIcons.js`, `controllers/admin/catalog.js`, `views/admin/service-form.ejs`
 - [x] E11. Публичный `/api/gallery` отдаёт только поля карточки (`title`, `category`, `description`, `type`, `url`, `thumbnail`, `width`, `height`), без `id`, `order` и таймстемпов — `controllers/galleryController.js`, `tests/app.test.js`
 - [x] E12. Загрузки изображений обрабатываются `sharp`: EXIF-поворот, ресайз до 1920 px (постеры — до 1280 px), WebP ~82, оригинал удаляется; размеры пишутся в БД миграцией `0004` и выводятся в `width`/`height` шаблонов против скачков layout — `middleware/upload.js`, `migrations/0004-image-dimensions.js`, `models/`, `controllers/`, `views/`
+- [x] E13. Мониторинг: systemd-таймер раз в минуту проверяет `/healthz`, алерты в Telegram с дедупликацией и сообщением о восстановлении, `OnFailure=` для сервиса, journald ограничен 500 МБ — `deploy/healthcheck.sh`, `deploy/install-monitoring.sh`, `deploy/photoprint-*`, `deploy/setup-vps.sh`, `deploy/update-vps.sh`
+- [x] E14. Мажорные зависимости: `sqlite3` 6.0.1, `express` 5.3.0, `helmet` 8.3.0, `express-rate-limit` 8.7.2, `bcryptjs` 3.0.3, `dotenv` 18.0.9; `dotenv` переведён на `quiet`, runtime-audit сокращён до 2 moderate (цепочка `sequelize`/`uuid`) — `package.json`, `package-lock.json`, `app.js`, `seeds/seed.js`
 
 ## Критерии готовности
 
@@ -66,7 +68,7 @@
 ## Итоги выполнения
 
 - `npm run lint` — 0 ошибок; `npm run format:check` — OK
-- `npm test` — 51/51 (node:test + supertest)
+- `npm test` — 52/52 (node:test + supertest)
 - Smoke на живом сервере: все страницы, CSP, CSRF (формы + API), отзыв JWT, CRUD услуг
 - Найден и исправлен по ходу работы баг: CSRF-проверка не видела `_csrf` в multipart-формах
   (проверка перенесена после multer: `verifyCsrfAfterUpload`), добавлен регрессионный тест

@@ -45,22 +45,24 @@ npm start
 
 ### Переменные окружения (`.env`)
 
-| Переменная          | Назначение                                                           |
-| ------------------- | -------------------------------------------------------------------- |
-| `PORT`              | Порт HTTP-сервера (по умолчанию 3000)                                |
-| `NODE_ENV`          | `development` / `production`                                         |
-| `SESSION_SECRET`    | Секрет сессий (обязательно в проде)                                  |
-| `JWT_SECRET`        | Секрет JWT-токенов (обязательно в проде)                             |
-| `SESSION_DIR`       | Каталог файловых сессий (по умолчанию `data/sessions`)               |
-| `BASE_URL`          | Базовый URL для sitemap и canonical/OG-тегов                         |
-| `CORS_ORIGINS`      | Список разрешённых origin через запятую (пусто = CORS выключен)      |
-| `ADMIN_USERNAME`    | Логин администратора (при `npm run seed`)                            |
-| `ADMIN_PASSWORD`    | Пароль администратора (обязателен для `npm run seed`)                |
-| `MAIL_*`            | SMTP для уведомлений о заявках (если не заданы — почта пропускается) |
-| `BOT_ENABLED`       | Включить Telegram-бота (`true`/`false`)                              |
-| `BOT_TOKEN`         | Токен бота от @BotFather (без токена бот не запускается)             |
-| `BOT_USERNAME`      | Имя бота без `@` — для ссылки `https://t.me/…` на сайте и в панели   |
-| `BOT_ADMIN_CHAT_ID` | Chat id администратора (можно задать и в админке)                    |
+| Переменная          | Назначение                                                                                 |
+| ------------------- | ------------------------------------------------------------------------------------------ |
+| `PORT`              | Порт HTTP-сервера (по умолчанию 3000)                                                      |
+| `NODE_ENV`          | `development` / `production`                                                               |
+| `SESSION_SECRET`    | Секрет сессий (обязательно в проде)                                                        |
+| `JWT_SECRET`        | Секрет JWT-токенов (обязательно в проде)                                                   |
+| `SESSION_DIR`       | Каталог файловых сессий (по умолчанию `data/sessions`)                                     |
+| `BASE_URL`          | Базовый URL для sitemap и canonical/OG-тегов                                               |
+| `CORS_ORIGINS`      | Список разрешённых origin через запятую (пусто = CORS выключен)                            |
+| `ADMIN_USERNAME`    | Логин администратора (при `npm run seed`)                                                  |
+| `ADMIN_PASSWORD`    | Пароль администратора (обязателен для `npm run seed`)                                      |
+| `MAIL_*`            | SMTP для уведомлений о заявках (если не заданы — почта пропускается)                       |
+| `BOT_ENABLED`       | Включить Telegram-бота (`true`/`false`)                                                    |
+| `BOT_TOKEN`         | Токен бота от @BotFather (без токена бот не запускается)                                   |
+| `BOT_USERNAME`      | Имя бота без `@` — для ссылки `https://t.me/…` на сайте и в панели                         |
+| `BOT_ADMIN_CHAT_ID` | Chat id администратора (можно задать и в админке)                                          |
+| `HEALTHCHECK_URL`   | URL проверки для мониторинга (по умолчанию `http://127.0.0.1:PORT/healthz`)                |
+| `ALERT_CHAT_ID`     | Chat id для алертов мониторинга (по умолчанию `BOT_ADMIN_CHAT_ID` или настройка в админке) |
 
 ## Telegram-бот
 
@@ -148,20 +150,47 @@ utils/                 # asyncHandler, mailer, slugify, uploads
 
 ## Технологии
 
-- Express 4, EJS, Sequelize + SQLite
+- Node.js 20.17+, Express 5, EJS, Sequelize + SQLite
 - JWT + cookie auth, express-session, connect-flash
 - Multer (загрузка файлов), Helmet, express-rate-limit, express-validator
-- Nodemailer (опционально), bcryptjs
+- Nodemailer (опционально), bcryptjs 3
 - Vanilla JS + собственный CSS (light/dark)
 - Font Awesome 6.5.2 — локальный сабсет, без CDN
 
 ## Эксплуатация
 
-- `GET /healthz` — проверка живости: `{ "status": "ok", "db": "ok", "uptime": N }`, при недоступной БД возвращает `503`. Подходит для systemd/uptime-мониторинга.
+- `GET /healthz` — проверка живости: `{ "status": "ok", "db": "ok", "uptime": N }`, при недоступной БД возвращает `503`.
+- Мониторинг: systemd-таймер раз в минуту проверяет `/healthz` и при падении пишет в Telegram (один алерт на сбой + сообщение о восстановлении). `OnFailure=` в drop-in сервиса ловит аварийные завершения, journald ограничен 500 МБ. Устанавливается `deploy/install-monitoring.sh` из `setup-vps.sh`/`update-vps.sh`.
 - `SIGTERM`/`SIGINT` обрабатываются в `server.js`: сервер перестаёт принимать соединения, бот останавливается, SQLite закрывается (жёсткий таймаут — 10 с).
 - SQLite работает в режиме WAL с `busy_timeout = 5000`, поэтому сайт и бот могут писать одновременно.
 - Миграции: `sequelize.sync()` создаёт недостающие таблицы, а изменения существующей схемы (индексы, новые колонки) лежат в `migrations/*.js` и применяются при старте. Учёт — в таблице `_schema_migrations`, повторный запуск ничего не делает.
 - Сессии сайта и диалоги бота чистятся автоматически: просроченные файлы в `data/sessions` и `data/telegram-sessions` удаляются при старте и по таймеру.
+
+## Мониторинг и алерты
+
+`deploy/install-monitoring.sh` ставит на VPS:
+
+- `photoprint-healthcheck.timer` — раз в минуту запускает `deploy/healthcheck.sh`; он проверяет
+  `/healthz` и шлёт в Telegram один алерт на сбой (повтор — не чаще раза в час) и отдельное
+  сообщение о восстановлении;
+- `photoprint-alert@.service` + `OnFailure=` в drop-in основного сервиса — мгновенный алерт,
+  если systemd-юнит упал;
+- drop-in journald с `SystemMaxUse=500M` и `SystemMaxFileSize=50M`.
+
+Для алертов нужны `BOT_TOKEN` и chat id: `ALERT_CHAT_ID` из `.env`, иначе `BOT_ADMIN_CHAT_ID`,
+иначе значение из настроек Telegram в админке (его скрипт читает из SQLite через `sqlite3`).
+
+Проверить отправку и статус:
+
+```bash
+sudo -u photoprint /usr/local/bin/photoprint-healthcheck.sh --test
+sudo systemctl status photoprint-healthcheck.timer
+sudo journalctl -u photoprint-healthcheck.service -n 50 --no-pager
+```
+
+Таймер живёт на том же VPS, поэтому видит падение приложения, но не падение самого сервера.
+Для полного внешнего контроля настройте сторонний uptime-сервис на `https://<домен>/healthz`
+с уведомлением в Telegram; ответ `503` означает недоступную БД.
 
 ## Шрифт Manrope
 
