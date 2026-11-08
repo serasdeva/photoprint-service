@@ -1,45 +1,45 @@
-<%- include('./partials/header', { activePage: 'home', title: title || 'PhotoPrint Service' }) %>
+<%- include('./partials/header', { activePage: 'home', title: title || 'Фотоистории' }) %>
 
 <main id="main">
   <section class="hero home-hero">
     <div class="container hero-grid">
       <div class="hero-copy">
-        <span class="kicker"><i class="fa-solid fa-print"></i> Фото и документы — в одном месте</span>
-        <h1><%= settings.heroTitle || 'Печать, копирование и оформление документов' %></h1>
-        <p class="lead"><%= settings.heroSubtitle || 'Работаем для дома, офиса и бизнеса.' %></p>
+        <span class="kicker"><i class="fa-solid fa-camera"></i> Фотосъёмка важных моментов</span>
+        <h1><%= settings.heroTitle || 'Истории, к которым хочется возвращаться' %></h1>
+        <p class="lead"><%= settings.heroSubtitle || 'Свадьбы, дни рождения, выпускные и личные съёмки — живые кадры и бережная обработка.' %></p>
 
         <div class="cta-row">
           <a class="btn btn-primary btn-lg" href="#order-form">
-            Оставить заявку <i class="fa-solid fa-arrow-right"></i>
+            Обсудить съёмку <i class="fa-solid fa-arrow-right"></i>
           </a>
-          <a class="btn btn-secondary btn-lg" href="/services">Выбрать услугу</a>
+          <a class="btn btn-secondary btn-lg" href="/gallery">Смотреть портфолио</a>
           <a class="btn btn-ghost btn-lg" href="tel:<%= String(settings.phone||'').replace(/[^\d+]/g,'') %>"><i class="fa-solid fa-phone"></i> Позвонить</a>
         </div>
 
         <div class="hero-highlights" aria-label="Наши направления">
-          <span><i class="fa-solid fa-camera"></i> Фотопечать</span>
-          <span><i class="fa-solid fa-copy"></i> Копирование</span>
-          <span><i class="fa-solid fa-file-lines"></i> Документы</span>
+          <span><i class="fa-solid fa-heart"></i> Свадьбы и love story</span>
+          <span><i class="fa-solid fa-gift"></i> Праздники</span>
+          <span><i class="fa-solid fa-users"></i> Портреты</span>
         </div>
 
-        <div class="hero-stats" aria-label="Показатели сервиса">
+        <div class="hero-stats" aria-label="Наш подход к съёмке">
           <div class="stat">
-            <strong>1500+</strong>
-            <span>выполненных заказов</span>
+            <strong>Ваш день</strong>
+            <span>внимание к важным деталям</span>
           </div>
           <div class="stat">
-            <strong>24 ч</strong>
-            <span>срок изготовления</span>
+            <strong>Без спешки</strong>
+            <span>естественные эмоции и живые кадры</span>
           </div>
           <div class="stat">
-            <strong>4.9/5</strong>
-            <span>средний рейтинг</span>
+            <strong>Ваша история</strong>
+            <span>съёмка под ваш характер</span>
           </div>
         </div>
-        <div class="hero-trust" aria-label="Гарантии">
-          <span><i class="fa-solid fa-shield-halved"></i> Без предоплаты на простые заказы</span>
-          <span><i class="fa-solid fa-circle-check"></i> Проверка файла перед печатью</span>
-          <span><i class="fa-solid fa-clock"></i> <%= settings.workHours || 'Пн–Сб: 09:00–20:00' %></span>
+        <div class="hero-trust" aria-label="Перед съёмкой">
+          <span><i class="fa-solid fa-camera"></i> Подскажу с позированием и локацией</span>
+          <span><i class="fa-regular fa-image"></i> Обработанные фотографии в онлайн-галерее</span>
+          <span><i class="fa-solid fa-calendar"></i> Дата съёмки — по договорённости</span>
         </div>
       </div>
 
@@ -56,19 +56,19 @@
               <i class="fa-regular fa-images"></i>
               <span>
                 <strong><%= gallery[0].title %></strong>
-                <small>Работа нашей мастерской</small>
+                <small>Момент, который останется с вами</small>
               </span>
             </span>
           <% } else { %>
             <div class="hero-art-empty">
               <i class="fa-solid fa-camera-retro"></i>
-              <span>Ваши идеи — в печати</span>
+              <span>Ваши моменты — в кадре</span>
             </div>
           <% } %>
         </div>
         <div class="hero-art-note">
           <span class="hero-art-note-icon"><i class="fa-solid fa-heart"></i></span>
-          <span><strong>С заботой о деталях</strong><small>От файла до готового заказа</small></span>
+          <span><strong>С заботой о деталях</strong><small>От первой встречи до готовых кадров</small></span>
         </div>
       </aside>
     </div>
@@ -78,37 +78,37 @@
     <div class="container">
       <div class="promo-strip reveal">
         <div class="promo-strip-head">
-          <span class="kicker"><i class="fa-solid fa-shield-heart"></i> Удобный сервис для жизни и работы</span>
-          <h2>Всё, что нужно для фото, копий и документов — в одном месте</h2>
+          <span class="kicker"><i class="fa-solid fa-heart"></i> Для важных событий и простых дней</span>
+          <h2>Сохраняю воспоминания о том, что важно именно вам</h2>
         </div>
 
         <div class="promo-grid">
           <div class="promo-item">
-            <span class="promo-icon"><i class="fa-solid fa-print"></i></span>
+            <span class="promo-icon"><i class="fa-solid fa-heart"></i></span>
             <div>
-              <strong>Печать по размеру</strong>
-              <small>Фото, плакаты, A4, документы</small>
+              <strong>Свадьбы и love story</strong>
+              <small>Репортаж, прогулка и история пары</small>
             </div>
           </div>
           <div class="promo-item">
-            <span class="promo-icon"><i class="fa-solid fa-file-lines"></i></span>
+            <span class="promo-icon"><i class="fa-solid fa-gift"></i></span>
             <div>
-              <strong>Оформление документов</strong>
-              <small>Бланки, заявления, распечатки</small>
+              <strong>Дни рождения</strong>
+              <small>Эмоции, гости и важные моменты</small>
             </div>
           </div>
           <div class="promo-item">
-            <span class="promo-icon"><i class="fa-solid fa-copy"></i></span>
+            <span class="promo-icon"><i class="fa-solid fa-graduation-cap"></i></span>
             <div>
-              <strong>Копии и сканирование</strong>
-              <small>Быстро и без лишних переплат</small>
+              <strong>Выпускные</strong>
+              <small>Праздник, который бывает один раз</small>
             </div>
           </div>
           <div class="promo-item">
-            <span class="promo-icon"><i class="fa-solid fa-clock"></i></span>
+            <span class="promo-icon"><i class="fa-regular fa-user"></i></span>
             <div>
-              <strong>Сроки по задаче</strong>
-              <small>Для дома, офиса и срочных заказов</small>
+              <strong>Личные и семейные съёмки</strong>
+              <small>Портреты, прогулки и семейные истории</small>
             </div>
           </div>
         </div>
@@ -120,27 +120,27 @@
     <div class="container">
       <div class="section-head">
         <div>
-          <span class="kicker"><i class="fa-solid fa-shield-heart"></i> Почему выбирают нас</span>
-          <h2>Работаем быстро, чётко и без лишней бюрократии</h2>
+          <span class="kicker"><i class="fa-solid fa-star"></i> Внимание к человеку и моменту</span>
+          <h2>Чтобы на фотографиях вы были собой</h2>
         </div>
-        <p class="section-copy">Поддержим вас в решении самых простых и срочных задач — от семейных фото до официальной печати документов.</p>
+        <p class="section-copy">Помогаю сохранить атмосферу события и чувствовать себя свободно перед камерой.</p>
       </div>
 
       <div class="feature-grid reveal">
         <article class="card feature-card">
-          <div class="feature-icon"><i class="fa-solid fa-bolt"></i></div>
-          <h3>Быстрая обработка</h3>
-          <p>Оперативно оформляем заказы и подбираем оптимальный вариант по срокам и бюджету.</p>
+          <div class="feature-icon"><i class="fa-solid fa-face-smile"></i></div>
+          <h3>Комфортно в кадре</h3>
+          <p>Подскажу, куда встать и как двигаться, но не превращу съёмку в череду натянутых поз.</p>
         </article>
         <article class="card feature-card">
-          <div class="feature-icon"><i class="fa-solid fa-check-circle"></i></div>
-          <h3>Гарантия качества</h3>
-          <p>Проверяем форматы, качество печати и итоговую подачу, чтобы результат выглядел аккуратно.</p>
+          <div class="feature-icon"><i class="fa-solid fa-camera-retro"></i></div>
+          <h3>Живой репортаж</h3>
+          <p>Ловлю не только главные события, но и взгляды, объятия и маленькие детали дня.</p>
         </article>
         <article class="card feature-card">
-          <div class="feature-icon"><i class="fa-solid fa-headset"></i></div>
-          <h3>Личный подход</h3>
-          <p>Подскажем, что лучше выбрать по материалам, размеру и назначению — без лишних сложностей.</p>
+          <div class="feature-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+          <h3>Бережная обработка</h3>
+          <p>Цвет и свет подчёркивают атмосферу кадра, а не меняют вас до неузнаваемости.</p>
         </article>
       </div>
     </div>
@@ -151,15 +151,15 @@
       <div class="section-head">
         <div>
           <span class="kicker"><i class="fa-solid fa-layer-group"></i> Наши услуги</span>
-          <h2>Готовы помочь с любой задачей</h2>
+          <h2>Выберите свою историю</h2>
         </div>
-        <p class="section-copy">Печать фото, копирование, сканирование и оформление документов для дома, офиса и бизнеса.</p>
+        <p class="section-copy">Свадьбы, дни рождения, выпускные, семейные и индивидуальные фотосессии.</p>
       </div>
 
       <form class="services-toolbar" method="GET" action="/services" role="search" aria-label="Поиск по услугам">
         <label class="search-field" for="home-service-search">
           <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-          <input id="home-service-search" name="q" data-services-search type="search" placeholder="Найти услугу: например, Фото 10×15" autocomplete="off" />
+          <input id="home-service-search" name="q" data-services-search type="search" placeholder="Например: свадебная съёмка" autocomplete="off" />
         </label>
         <button type="submit" class="btn btn-secondary">Найти</button>
         <span class="gallery-status" data-services-status aria-live="polite"></span>
@@ -170,7 +170,7 @@
           <article class="card service-card card-hover reveal" data-service-card data-title="<%= service.title.toLowerCase() %>" data-desc="<%= (service.description||'').toLowerCase() %>">
             <div class="service-media">
               <img src="<%= service.image || '/gallery-placeholders/service-default.svg' %>" alt="<%= service.title %>" loading="lazy"<% if (service.width && service.height) { %> width="<%= service.width %>" height="<%= service.height %>"<% } %> />
-              <span class="service-icon"><i class="fa <%= service.icon || 'fa-print' %>"></i></span>
+              <span class="service-icon"><i class="fa <%= service.icon || 'fa-camera' %>"></i></span>
             </div>
             <div class="service-body">
               <h3><a href="/services/<%= service.slug %>"><%= service.title %></a></h3>
@@ -207,30 +207,30 @@
       <div class="section-head">
         <div>
           <span class="kicker"><i class="fa-solid fa-list-check"></i> Просто и понятно</span>
-          <h2>Как оформить заказ</h2>
+          <h2>Как проходит съёмка</h2>
         </div>
-        <p class="section-copy">Выберите удобный способ — поможем разобраться с форматом и деталями.</p>
+        <p class="section-copy">Обсудим ваши пожелания заранее, чтобы в день съёмки вы могли просто проживать момент.</p>
       </div>
       <div class="process-grid">
         <article class="process-card reveal">
           <span class="process-number">01</span>
           <div>
-            <h3>Выберите услугу</h3>
-            <p>Посмотрите направления и цены или расскажите нам, что нужно сделать.</p>
+            <h3>Расскажите о событии</h3>
+            <p>Напишите дату, место и какой результат вы хотели бы получить.</p>
           </div>
         </article>
         <article class="process-card reveal">
           <span class="process-number">02</span>
           <div>
-            <h3>Обсудим детали</h3>
-            <p>Оставьте заявку на сайте или позвоните — уточним формат и пожелания.</p>
+            <h3>Спланируем съёмку</h3>
+            <p>Обсудим тайминг, локации, настроение и все важные для вас детали.</p>
           </div>
         </article>
         <article class="process-card reveal">
           <span class="process-number">03</span>
           <div>
-            <h3>Заберите заказ</h3>
-            <p>Когда всё будет готово, приходите к нам в удобное время работы.</p>
+            <h3>Получите фотографии</h3>
+            <p>После съёмки вы получите готовую галерею, которой удобно делиться с близкими.</p>
           </div>
         </article>
       </div>
@@ -241,26 +241,26 @@
     <div class="container">
       <div class="section-head">
         <div>
-          <span class="kicker"><i class="fa-solid fa-star"></i> Отзывы</span>
-          <h2>Нам доверяют</h2>
+          <span class="kicker"><i class="fa-solid fa-heart"></i> Наш подход</span>
+          <h2>Больше, чем просто красивые кадры</h2>
         </div>
-        <p class="section-copy">Живые отзывы клиентов — то, ради чего мы стараемся каждый день.</p>
+        <p class="section-copy">Фотографии помогают снова почувствовать атмосферу дня — и заметить то, что в суете могло ускользнуть.</p>
       </div>
       <div class="reviews-grid">
         <article class="card review-card reveal">
-          <div class="review-head"><span class="review-author">Марина К.</span><span class="review-stars" aria-label="5 из 5">★★★★★</span></div>
-          <p>«Сделали фото на документы за 10 минут, всё объяснили и помогли выбрать формат. Очень вежливо!»</p>
-          <small class="text-muted">Фото 10×15 · 12 декабря 2025</small>
+          <div class="review-head"><span class="review-author">Атмосфера</span><i class="fa-solid fa-heart"></i></div>
+          <p>Съёмка — не только про постановочные портреты, но и про искренние эмоции, которые складываются в историю.</p>
+          <small class="text-muted">Свадьбы · семейные праздники · встречи</small>
         </article>
         <article class="card review-card reveal">
-          <div class="review-head"><span class="review-author">Алексей П.</span><span class="review-stars" aria-label="5 из 5">★★★★★</span></div>
-          <p>«Печатал диплом и копии — качество отличное, сроки соблюдены. Буду обращаться ещё.»</p>
-          <small class="text-muted">Копирование · 4 января 2026</small>
+          <div class="review-head"><span class="review-author">Спокойствие</span><i class="fa-solid fa-face-smile"></i></div>
+          <p>Заранее знакомимся и обсуждаем план, чтобы перед камерой было проще расслабиться и оставаться собой.</p>
+          <small class="text-muted">Подготовка · бережное сопровождение</small>
         </article>
         <article class="card review-card reveal">
-          <div class="review-head"><span class="review-author">Елена В.</span><span class="review-stars" aria-label="5 из 5">★★★★★</span></div>
-          <p>«Оформляли заявления и бланки — быстро, аккуратно и без очередей. Рекомендую!»</p>
-          <small class="text-muted">Оформление документов · 18 января 2026</small>
+          <div class="review-head"><span class="review-author">Память</span><i class="fa-regular fa-image"></i></div>
+          <p>Готовые фотографии собраны в онлайн-галерею — её можно сохранить и отправить родным и друзьям.</p>
+          <small class="text-muted">Готовая история · удобно поделиться</small>
         </article>
       </div>
     </div>
@@ -271,25 +271,25 @@
       <div class="section-head">
         <div>
           <span class="kicker"><i class="fa-solid fa-circle-question"></i> Частые вопросы</span>
-          <h2>Ответы на популярные вопросы</h2>
+          <h2>Перед съёмкой</h2>
         </div>
       </div>
       <div class="faq-list" data-faq>
         <details class="card faq-item" open>
-          <summary>Сколько времени занимает печать?<span class="faq-icon"><i class="fa-solid fa-chevron-down"></i></span></summary>
-          <p>Простые заказы (фото 10×15, копии, распечатки) — в течение часа. Постеры и документы — до 24 часов, уточним при приёме заказа.</p>
+          <summary>Что входит в стоимость съёмки?<span class="faq-icon"><i class="fa-solid fa-chevron-down"></i></span></summary>
+          <p>Стоимость зависит от формата, продолжительности и места съёмки. Напишите о событии — обсудим состав пакета и назовём цену до бронирования.</p>
         </details>
         <details class="card faq-item">
-          <summary>Можно ли прислать файл заранее?<span class="faq-icon"><i class="fa-solid fa-chevron-down"></i></span></summary>
-          <p>Да, оставьте заявку и опишите задачу. Мы свяжемся с вами и подскажем, как передать файл.</p>
+          <summary>Как забронировать дату?<span class="faq-icon"><i class="fa-solid fa-chevron-down"></i></span></summary>
+          <p>Оставьте заявку или позвоните. Уточним доступность даты, детали события и условия бронирования.</p>
         </details>
         <details class="card faq-item">
-          <summary>Какие форматы файлов принимаете?<span class="faq-icon"><i class="fa-solid fa-chevron-down"></i></span></summary>
-          <p>JPG, PNG, PDF, DOCX. Если формат специфичный — напишите нам, проверим и подскажем.</p>
+          <summary>Вы фотографируете за пределами города?<span class="faq-icon"><i class="fa-solid fa-chevron-down"></i></span></summary>
+          <p>Возможность выезда и его стоимость обсудим при заявке — укажите место проведения съёмки.</p>
         </details>
         <details class="card faq-item">
-          <summary>Делаете ли срочные заказы?<span class="faq-icon"><i class="fa-solid fa-chevron-down"></i></span></summary>
-          <p>Да, по возможности выполняем в день обращения. Уточняйте по телефону <a href="tel:<%= String(settings.phone||'').replace(/[^\d+]/g,'') %>"><%= settings.phone %></a>.</p>
+          <summary>Когда будут готовы фотографии?<span class="faq-icon"><i class="fa-solid fa-chevron-down"></i></span></summary>
+          <p>Срок зависит от объёма съёмки. Согласуем его заранее и сообщим, когда галерея будет готова.</p>
         </details>
       </div>
     </div>
@@ -300,7 +300,7 @@
       <div class="section-head">
         <div>
           <span class="kicker"><i class="fa-regular fa-images"></i> Примеры работ</span>
-          <h2>Галерея выполненных заказов</h2>
+          <h2>Истории в кадрах</h2>
         </div>
         <a href="/gallery" class="btn btn-secondary">
           Смотреть всю галерею <i class="fa-solid fa-arrow-right"></i>
@@ -342,8 +342,8 @@
     <div class="container">
       <div class="cta-banner reveal">
         <div>
-          <h2>Есть задача? Мы поможем</h2>
-          <p>Оставьте заявку — обсудим детали, подскажем подходящую услугу и ответим на вопросы.</p>
+          <h2>Планируете важный день?</h2>
+          <p>Расскажите, что собираетесь отметить, — вместе подберём формат съёмки.</p>
         </div>
         <a href="/contacts" class="btn btn-lg">
           Оставить заявку <i class="fa-solid fa-arrow-right"></i>
@@ -357,7 +357,7 @@
       <div class="contact-stack reveal">
         <div>
           <span class="kicker"><i class="fa-regular fa-address-card"></i> Связаться с нами</span>
-          <h2 style="margin-top: 14px;">Контакты</h2>
+          <h2 style="margin-top: 14px;">Давайте знакомиться</h2>
         </div>
 
         <div class="card">
@@ -423,7 +423,7 @@
 
             <div>
               <label for="order-service">Услуга</label>
-              <input id="order-service" name="service" placeholder="Например: Фото A4" list="service-suggestions" />
+              <input id="order-service" name="service" placeholder="Например: свадьба или семейная съёмка" list="service-suggestions" />
               <datalist id="service-suggestions">
                 <% services.forEach(s=>{ %><option value="<%= s.title %>"></option><% }) %>
               </datalist>
@@ -431,7 +431,7 @@
 
             <div>
               <label for="order-message">Комментарий</label>
-              <textarea id="order-message" name="message" placeholder="Опишите задачу" maxlength="3000"></textarea>
+              <textarea id="order-message" name="message" placeholder="Дата, место и ваши пожелания" maxlength="3000"></textarea>
               <small class="form-hint"><span data-char-count>0</span>/3000</small>
             </div>
 

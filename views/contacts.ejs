@@ -1,4 +1,4 @@
-<%- include('./partials/header', { activePage: 'contacts', title: 'Контакты', description: 'Адрес, телефон, режим работы и форма обратной связи PhotoPrint Service.' }) %>
+<%- include('./partials/header', { activePage: 'contacts', title: 'Записаться на съёмку', description: 'Свяжитесь с фотографом, чтобы обсудить дату, формат и детали съёмки.' }) %>
 
 <main id="main">
   <section class="page-hero contact-page-hero">
@@ -8,8 +8,8 @@
         <i class="fa-solid fa-chevron-right"></i>
         <span>Контакты</span>
       </nav>
-      <h1>Контакты</h1>
-      <p class="lead">Свяжитесь с нами удобным способом или оставьте заявку — ответим в рабочее время.</p>
+      <h1>Давайте обсудим вашу съёмку</h1>
+      <p class="lead">Расскажите о событии, дате и своих идеях — я свяжусь с вами, чтобы обсудить детали.</p>
     </div>
   </section>
 
@@ -17,7 +17,7 @@
     <div class="container contact-grid contact-page-grid">
       <div class="contact-stack contact-info-stack reveal">
         <div class="card contact-info-card">
-          <h3>Наши данные</h3>
+          <h3>Как связаться</h3>
           <ul class="contact-list">
             <li>
               <i class="fa-solid fa-location-dot"></i>
@@ -56,8 +56,8 @@
       </div>
 
       <div class="card contact-form-card reveal">
-        <h3>Написать нам</h3>
-        <p class="text-muted contact-form-copy">Заполните форму — свяжемся с вами в рабочее время.</p>
+        <h3>Расскажите о планах</h3>
+        <p class="text-muted contact-form-copy">Укажите дату и формат съёмки, если уже знаете их.</p>
         <form data-form="order" novalidate>
           <div class="hp-field" aria-hidden="true">
             <input type="text" name="website" tabindex="-1" autocomplete="off" value="" />
@@ -82,11 +82,11 @@
             </div>
             <div>
               <label for="order-service">Услуга</label>
-              <input id="order-service" name="service" placeholder="Например: Фото A4" />
+              <input id="order-service" name="service" placeholder="Например: свадьба или портрет" />
             </div>
             <div>
               <label for="contact-message">Сообщение</label>
-              <textarea id="contact-message" name="message" placeholder="Опишите задачу" maxlength="3000"></textarea>
+              <textarea id="contact-message" name="message" placeholder="Дата, место и ваши пожелания" maxlength="3000"></textarea>
               <small class="form-hint"><span data-char-count>0</span>/3000</small>
             </div>
 

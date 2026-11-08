@@ -3,11 +3,13 @@ const { filterByTerm } = require('../utils/search');
 
 const CATEGORY_LABELS = {
   general: 'Общее',
-  photo: 'Фото',
-  print: 'Печать',
-  docs: 'Документы',
-  scan: 'Сканирование',
-  copy: 'Копирование',
+  photo: 'Фотографии',
+  wedding: 'Свадьбы',
+  birthday: 'Дни рождения',
+  graduation: 'Выпускные',
+  portrait: 'Портреты',
+  family: 'Семейные',
+  'love-story': 'Love story',
 };
 
 // Первая страница рендерится на сервере, остальное догружает /api/gallery.
@@ -25,7 +27,15 @@ function buildCategoryList(items) {
     }
   });
 
-  const preferredOrder = ['photo', 'print', 'docs', 'scan', 'copy', 'general'];
+  const preferredOrder = [
+    'wedding',
+    'birthday',
+    'graduation',
+    'portrait',
+    'family',
+    'love-story',
+    'general',
+  ];
   return [...seen.entries()]
     .sort((a, b) => {
       const ia = preferredOrder.indexOf(a[0]);

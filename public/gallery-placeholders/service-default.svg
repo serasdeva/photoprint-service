@@ -1,12 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+  <title>Иллюстрация для фотосъёмки</title>
   <defs>
     <linearGradient id="background" x1="0" x2="1" y1="0" y2="1">
-      <stop offset="0%" stop-color="#eff6ff"/>
-      <stop offset="100%" stop-color="#dbeafe"/>
+      <stop offset="0%" stop-color="#f8e9dc"/>
+      <stop offset="100%" stop-color="#dfbda5"/>
     </linearGradient>
   </defs>
   <rect width="1200" height="900" fill="url(#background)"/>
-  <rect x="390" y="230" width="420" height="400" rx="38" fill="#fff" stroke="#93c5fd" stroke-width="18"/>
-  <path d="M500 370h200M500 440h200M500 510h130" stroke="#60a5fa" stroke-width="26" stroke-linecap="round"/>
-  <text x="600" y="740" fill="#1e3a8a" font-size="48" font-weight="700" text-anchor="middle" font-family="Arial,sans-serif">ФотоPrint</text>
+  <circle cx="600" cy="410" r="248" fill="#fffefa" opacity=".35"/>
+  <rect x="320" y="250" width="560" height="390" rx="42" fill="#fffefa"/>
+  <rect x="390" y="315" width="420" height="260" rx="28" fill="#c45136"/>
+  <circle cx="600" cy="445" r="104" fill="#f8e9dc"/>
+  <circle cx="600" cy="445" r="68" fill="#665d55"/>
+  <circle cx="600" cy="445" r="42" fill="#d9a276"/>
+  <circle cx="755" cy="292" r="18" fill="#d9a276"/>
+  <text x="600" y="730" fill="#4a372c" font-size="46" font-weight="700" text-anchor="middle" font-family="Georgia,serif">Ваша история</text>
 </svg>

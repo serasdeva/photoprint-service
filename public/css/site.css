@@ -49,6 +49,14 @@ html[data-theme='dark'] .public-site {
   --shadow-lg: 0 22px 60px rgba(0, 0, 0, 0.3);
 }
 
+.home-hero .hero-copy h1,
+.page-hero h1,
+.section-head h2 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+}
+
 /* ---------- Header ---------- */
 
 .site-header {

@@ -1,6 +1,6 @@
 <%
   var siteSettings = (typeof settings !== 'undefined' && settings) ? settings : {};
-  var siteName = siteSettings.siteName || 'PhotoPrint Service';
+  var siteName = siteSettings.siteName || 'Фотоистории';
   var phoneText = siteSettings.phone || '+7 (495) 555-11-22';
   var phoneHref = 'tel:' + String(phoneText).replace(/[^\d+]/g, '');
   var META_DESCRIPTION_LIMIT = 160;
@@ -21,14 +21,14 @@
   var metaDescription = truncateMetaDescription(
     (typeof description !== 'undefined' && description)
       ? description
-      : 'Печать фотографий, копирование документов, оформление документов и набор текста — быстро и по доступной цене.',
+      : 'Свадебная, семейная и индивидуальная фотосъёмка, дни рождения и выпускные.',
     META_DESCRIPTION_LIMIT
   );
   var ogWidth = (typeof ogImageWidth !== 'undefined') ? ogImageWidth : null;
   var ogHeight = (typeof ogImageHeight !== 'undefined') ? ogImageHeight : null;
   var ogAlt = (typeof ogImageAlt !== 'undefined' && ogImageAlt)
     ? ogImageAlt
-    : siteName + ' — печать фото и документов';
+    : siteName + ' — фотограф на важные события';
 %>
 <!DOCTYPE html>
 <html lang="ru">
@@ -79,9 +79,9 @@
 
     <header class="site-header">
       <div class="container header-inner">
-        <a href="/" class="brand" aria-label="PhotoPrint — на главную">
-          <span class="brand-mark"><i class="fa-solid fa-print"></i></span>
-          <span class="brand-text">Photo<span>Print</span></span>
+        <a href="/" class="brand" aria-label="<%= siteName %> — на главную">
+          <span class="brand-mark"><i class="fa-solid fa-camera"></i></span>
+          <span class="brand-text"><%= siteName %></span>
         </a>
 
         <nav class="nav" id="site-nav" aria-label="Главная навигация">
@@ -117,11 +117,11 @@
     <script type="application/ld+json">
       <%- JSON.stringify({
         "@context": "https://schema.org",
-        "@type": "LocalBusiness",
+        "@type": "Photographer",
         "name": siteName,
         "telephone": phoneText,
         "url": canonicalUrl,
-        "address": { "@type": "PostalAddress", "addressLocality": "Москва", "streetAddress": siteSettings.address || "" },
+        "address": { "@type": "PostalAddress", "streetAddress": siteSettings.address || "" },
         "openingHours": siteSettings.workHours || ""
       }) %>
     </script>

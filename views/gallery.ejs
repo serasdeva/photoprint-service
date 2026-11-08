@@ -1,4 +1,4 @@
-<%- include('./partials/header', { activePage: 'gallery', title: 'Галерея работ', description: 'Примеры выполненных работ: фотопечать, печать документов, сканирование и копирование.' }) %>
+<%- include('./partials/header', { activePage: 'gallery', title: 'Портфолио', description: 'Свадебные, семейные и индивидуальные фотосессии, дни рождения и выпускные.' }) %>
 
 <%
   const currentQ = typeof filters !== 'undefined' && filters ? filters.q : '';
@@ -20,10 +20,10 @@
       <nav class="breadcrumbs" aria-label="Хлебные крошки">
         <a href="/">Главная</a>
         <i class="fa-solid fa-chevron-right"></i>
-        <span>Галерея</span>
+        <span>Портфолио</span>
       </nav>
-      <h1>Галерея работ</h1>
-      <p class="lead">Нажмите на работу, чтобы открыть её в полноэкранном режиме.</p>
+      <h1>Портфолио</h1>
+      <p class="lead">Истории свадеб, семейных праздников, выпускных и личных съёмок.</p>
     </div>
   </section>
 
@@ -32,7 +32,7 @@
       <form class="services-toolbar" method="GET" action="/gallery" role="search" aria-label="Поиск по галерее">
         <label class="search-field" for="gallery-q">
           <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-          <input id="gallery-q" name="q" type="search" placeholder="Поиск: фото, печать, документы" value="<%= (typeof filters !== 'undefined' && filters && filters.q) ? filters.q : '' %>" autocomplete="off" />
+          <input id="gallery-q" name="q" type="search" placeholder="Поиск по портфолио" value="<%= (typeof filters !== 'undefined' && filters && filters.q) ? filters.q : '' %>" autocomplete="off" />
         </label>
         <button type="submit" class="btn btn-secondary">Найти</button>
         <% if (typeof filters !== 'undefined' && filters && filters.q) { %>
@@ -55,8 +55,8 @@
             <p>Попробуйте другой запрос или посмотрите всю галерею.</p>
             <a href="/gallery" class="btn btn-secondary">Показать всё</a>
           <% } else { %>
-            <h3>В галерее пока нет работ</h3>
-            <p>Мы загружаем примеры — загляните позже.</p>
+            <h3>Портфолио скоро пополнится</h3>
+            <p>А пока расскажите, какую съёмку вы планируете.</p>
             <a href="/" class="btn btn-secondary">На главную</a>
           <% } %>
         </div>

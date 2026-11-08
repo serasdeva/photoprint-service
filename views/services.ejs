@@ -1,4 +1,4 @@
-<%- include('./partials/header', { activePage: 'services', title: 'Услуги', description: 'Полный список услуг: печать фотографий, копирование, оформление документов и набор текста.' }) %>
+<%- include('./partials/header', { activePage: 'services', title: 'Фотосъёмки', description: 'Свадебная, семейная и индивидуальная фотосъёмка, дни рождения и выпускные.' }) %>
 
 <main id="main">
   <section class="page-hero service-list-hero">
@@ -8,8 +8,8 @@
         <i class="fa-solid fa-chevron-right"></i>
         <span>Услуги</span>
       </nav>
-      <h1>Услуги</h1>
-      <p class="lead">Прозрачные цены и понятные сроки — выберите подходящую услугу и оставьте заявку.</p>
+      <h1>Фотосъёмки</h1>
+      <p class="lead">Выберите повод или формат съёмки. Стоимость и детали обсудим с учётом ваших пожеланий.</p>
     </div>
   </section>
 
@@ -18,7 +18,7 @@
       <form class="services-toolbar" method="GET" action="/services" role="search" aria-label="Поиск по услугам">
         <label class="search-field" for="services-q">
           <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-          <input id="services-q" name="q" type="search" placeholder="Поиск: например, паспорт, A4, копии" value="<%= (filters && filters.q) ? filters.q : '' %>" autocomplete="off" />
+          <input id="services-q" name="q" type="search" placeholder="Например, свадьба или портрет" value="<%= (filters && filters.q) ? filters.q : '' %>" autocomplete="off" />
         </label>
         <button type="submit" class="btn btn-secondary">Найти</button>
         <% if (filters && filters.q) { %>
@@ -40,14 +40,18 @@
             <article class="card service-card card-hover reveal">
               <div class="service-media">
                 <img src="<%= service.image || '/gallery-placeholders/service-default.svg' %>" alt="<%= service.title %>" loading="lazy"<% if (service.width && service.height) { %> width="<%= service.width %>" height="<%= service.height %>"<% } %> />
-                <span class="service-icon"><i class="fa <%= service.icon || 'fa-print' %>"></i></span>
+                <span class="service-icon"><i class="fa <%= service.icon || 'fa-camera' %>"></i></span>
               </div>
               <div class="service-body">
                 <h3><a href="/services/<%= service.slug %>"><%= service.title %></a></h3>
                 <p><%= service.description %></p>
                 <div class="meta-row">
-                  <span class="price-tag"><%= service.price %> ₽</span>
-                  <span class="price-unit">/ <%= service.priceUnit %></span>
+                  <% if (Number(service.price) > 0) { %>
+                    <span class="price-tag"><%= service.price %> ₽</span>
+                    <span class="price-unit">/ <%= service.priceUnit %></span>
+                  <% } else { %>
+                    <span class="price-tag">Стоимость обсудим</span>
+                  <% } %>
                 </div>
                 <div class="service-actions">
                   <a href="/services/<%= service.slug %>" class="btn btn-secondary btn-sm">Подробнее</a>
@@ -65,8 +69,8 @@
     <div class="container">
       <div class="cta-banner reveal">
         <div>
-          <h2>Не нашли нужную услугу?</h2>
-          <p>Позвоните или оставьте заявку — подскажем, как решить задачу, и рассчитаем стоимость.</p>
+          <h2>Нужен другой формат съёмки?</h2>
+          <p>Расскажите о событии — обсудим ваши идеи и подберём подходящий формат.</p>
         </div>
         <a href="/contacts" class="btn btn-lg">
           Связаться с нами <i class="fa-solid fa-arrow-right"></i>

@@ -39,8 +39,14 @@
             </div>
             <div>
               <label for="g-category">Категория</label>
-              <input id="g-category" name="category" list="category-options" value="<%= formValues.category %>" placeholder="photo / print / docs" />
+              <input id="g-category" name="category" list="category-options" value="<%= formValues.category %>" placeholder="wedding / birthday / portrait" />
               <datalist id="category-options">
+                <option value="wedding">Свадьбы</option>
+                <option value="birthday">Дни рождения</option>
+                <option value="graduation">Выпускные</option>
+                <option value="portrait">Портреты</option>
+                <option value="family">Семейные</option>
+                <option value="love-story">Love story</option>
                 <% (categories || []).forEach((category) => { %>
                   <option value="<%= category %>"><%= category %></option>
                 <% }) %>

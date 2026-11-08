@@ -10,10 +10,10 @@
       <div class="container footer-grid">
         <div class="footer-brand">
           <a href="/" class="brand">
-            <span class="brand-mark"><i class="fa-solid fa-print"></i></span>
-            <span class="brand-text">Photo<span>Print</span></span>
+            <span class="brand-mark"><i class="fa-solid fa-camera"></i></span>
+            <span class="brand-text"><%= siteSettings.siteName || 'Фотоистории' %></span>
           </a>
-          <p>Печать фотографий, копирование и оформление документов для дома, офиса и бизнеса.</p>
+          <p>Свадебные, семейные и индивидуальные фотосъёмки, дни рождения и выпускные.</p>
         </div>
 
         <div class="footer-col">
@@ -45,7 +45,7 @@
       </div>
 
       <div class="container footer-bottom">
-        <span>© <%= currentYear %> PhotoPrint Service. Все права защищены.</span>
+        <span>© <%= currentYear %> <%= siteSettings.siteName || 'Фотоистории' %>. Все права защищены.</span>
         <div class="footer-bottom-links">
           <a href="/privacy">Политика конфиденциальности</a>
           <span class="divider-dot" aria-hidden="true"></span>
@@ -61,8 +61,8 @@
 
     <div class="sticky-cta" id="sticky-cta" hidden>
       <div class="sticky-cta-inner">
-        <span class="sticky-cta-text"><i class="fa-solid fa-bolt"></i> Нужна печать сегодня?</span>
-        <a href="#order-form" class="btn btn-primary btn-sm" data-sticky-order>Оставить заявку</a>
+        <span class="sticky-cta-text"><i class="fa-solid fa-camera"></i> Планируете съёмку?</span>
+        <a href="/contacts" class="btn btn-primary btn-sm" data-sticky-order>Обсудить дату</a>
         <a class="btn btn-secondary btn-sm" href="<%= footerPhoneHref %>"><i class="fa-solid fa-phone"></i> Позвонить</a>
         <button type="button" class="sticky-cta-close" aria-label="Скрыть"><i class="fa-solid fa-xmark"></i></button>
       </div>

@@ -121,7 +121,7 @@ test('GET / returns 200 with CSP header', async () => {
   const res = await request(app).get('/');
   assert.equal(res.status, 200);
   assert.match(res.text, /class="hero home-hero"/);
-  assert.match(res.text, /Как оформить заказ/);
+  assert.match(res.text, /Как проходит съёмка/);
   assert.match(res.text, /data-form="order"/);
   const csp = res.headers['content-security-policy'] || '';
   assert.match(csp, /default-src 'self'/);
@@ -175,7 +175,8 @@ test('rebuilt home page exposes new UX blocks without breaking legacy hooks', as
   assert.match(res.text, /id="home-services"/);
   assert.match(res.text, /data-services-search/);
   assert.match(res.text, /data-services-grid/);
-  assert.match(res.text, /Отзывы/);
+  assert.match(res.text, /Наш подход/);
+  assert.match(res.text, /свадьбы/i);
   assert.match(res.text, /Частые вопросы/);
   assert.match(res.text, /data-faq/);
   assert.match(res.text, /id="order-form"/);
@@ -1113,7 +1114,8 @@ test('Font Awesome is self-hosted and no CDN is referenced', async () => {
     assert.equal(res.status, 200);
     assert.ok(res.text.includes(`href="${asset('/vendor/fontawesome/icons.css')}"`));
     assert.doesNotMatch(res.text, /cdnjs\.cloudflare\.com/);
-    assert.match(res.text, /class="fa-solid fa-print"/);
+    const expectedIcon = page === '/admin/login' ? 'fa-print' : 'fa-camera';
+    assert.ok(res.text.includes(`class="fa-solid ${expectedIcon}"`));
   }
 
   const csp = (await request(app).get('/')).headers['content-security-policy'] || '';

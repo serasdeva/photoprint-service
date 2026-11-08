@@ -12,8 +12,12 @@
       </nav>
       <h1><%= service.title %></h1>
       <div class="meta-row service-detail-price">
-        <span class="price-tag"><%= service.price %> ₽</span>
-        <span class="price-unit">/ <%= service.priceUnit %></span>
+        <% if (Number(service.price) > 0) { %>
+          <span class="price-tag"><%= service.price %> ₽</span>
+          <span class="price-unit">/ <%= service.priceUnit %></span>
+        <% } else { %>
+          <span class="price-tag">Стоимость обсудим</span>
+        <% } %>
       </div>
     </div>
   </section>
@@ -23,7 +27,7 @@
       <div class="card reveal service-detail-card">
         <div class="service-media service-detail-media">
           <img src="<%= service.image || '/gallery-placeholders/service-default.svg' %>" alt="<%= service.title %>"<% if (service.width && service.height) { %> width="<%= service.width %>" height="<%= service.height %>"<% } %> />
-          <span class="service-icon"><i class="fa <%= service.icon || 'fa-print' %>"></i></span>
+          <span class="service-icon"><i class="fa <%= service.icon || 'fa-camera' %>"></i></span>
         </div>
         <p class="text-muted service-detail-description"><%= service.description %></p>
         <ul class="contact-list">
@@ -53,7 +57,7 @@
 
       <div class="card reveal service-order-card">
         <h3>Оставить заявку</h3>
-        <p class="text-muted service-order-copy">Заполните форму — свяжемся с вами и уточним детали заказа.</p>
+        <p class="text-muted service-order-copy">Оставьте контакты — обсудим дату, место и ваши пожелания.</p>
         <form data-form="order" novalidate>
           <div class="hp-field" aria-hidden="true">
             <input type="text" name="website" tabindex="-1" autocomplete="off" value="" />
@@ -79,7 +83,7 @@
             </div>
             <div>
               <label for="single-message">Комментарий</label>
-              <textarea id="single-message" name="message" placeholder="Количество, формат, пожелания" maxlength="3000"></textarea>
+              <textarea id="single-message" name="message" placeholder="Дата, место и пожелания к съёмке" maxlength="3000"></textarea>
               <small class="form-hint"><span data-char-count>0</span>/3000</small>
             </div>
             <button type="submit" class="btn btn-primary btn-block">Отправить заявку</button>
